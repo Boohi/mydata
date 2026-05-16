@@ -47,15 +47,27 @@ public actor IPCClient {
         let conn = NWConnection(to: .unix(path: socketPath), using: .tcp)
         connection = conn
         let ready = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+            // Guard against the handler firing more than once (e.g. .ready → .failed)
+            // which would double-resume the continuation and trap.
+            let resumed = ResumeLatch()
             conn.stateUpdateHandler = { state in
                 switch state {
-                case .ready: cont.resume(returning: true)
-                case .failed, .cancelled: cont.resume(returning: false)
-                default: break
+                case .ready:
+                    if resumed.tryResume() {
+                        cont.resume(returning: true)
+                    }
+                case .failed, .cancelled:
+                    if resumed.tryResume() {
+                        cont.resume(returning: false)
+                    }
+                default:
+                    break
                 }
             }
             conn.start(queue: queue)
         }
+        // Clear the handler — subsequent state transitions are not our concern here.
+        conn.stateUpdateHandler = nil
         if !ready {
             try? await Task.sleep(nanoseconds: UInt64(currentBackoff * 1_000_000_000))
             currentBackoff = Self.nextBackoff(current: currentBackoff, cap: backoffCap)
@@ -68,5 +80,16 @@ public actor IPCClient {
     private func tearDown() {
         connection?.cancel()
         connection = nil
+    }
+}
+
+private final class ResumeLatch: @unchecked Sendable {
+    private var done = false
+    private let lock = NSLock()
+    func tryResume() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if done { return false }
+        done = true
+        return true
     }
 }

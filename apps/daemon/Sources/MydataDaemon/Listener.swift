@@ -52,6 +52,12 @@ public final class Listener {
 
             while buf.count >= 4 {
                 let length = Int(buf.readBE(at: 0, as: UInt32.self))
+                // Spec caps frames at 65_535 bytes; anything larger is malformed
+                // (or a DoS attempt). Drop the connection.
+                if length > 65_535 {
+                    conn.cancel()
+                    return
+                }
                 let frameEnd = 4 + length
                 guard buf.count >= frameEnd else { break }
                 let frame = buf.subdata(in: buf.startIndex ..< buf.startIndex + frameEnd)
