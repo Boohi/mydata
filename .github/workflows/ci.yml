@@ -32,16 +32,19 @@ jobs:
           set -e
           fail=0
           while IFS= read -r -d '' f; do
+            # Strip fenced code blocks (``` ... ```) before extracting links.
+            stripped=$(awk '/^```/{f=!f; next} !f' "$f")
             while IFS= read -r link; do
               path="${link%%#*}"
               [[ -z "$path" ]] && continue
               [[ "$path" =~ ^https?:// ]] && continue
+              [[ "$path" =~ ^mailto: ]] && continue
               dir=$(dirname "$f")
               target="$dir/$path"
               if [[ ! -e "$target" ]]; then
                 echo "DEAD: $f -> $link"
                 fail=1
               fi
-            done < <(grep -oE '\]\([^)]+\)' "$f" | sed 's/^](\(.*\))/\1/')
-          done < <(find . -name '*.md' -not -path './node_modules/*' -print0)
+            done < <(echo "$stripped" | grep -oE '\]\([^)]+\)' | sed 's/^](\(.*\))/\1/')
+          done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -print0)
           exit $fail
