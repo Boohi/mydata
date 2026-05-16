@@ -48,8 +48,16 @@ public struct Migrator {
         }
         let migrationsURL = resourceURL.appendingPathComponent("Migrations", isDirectory: true)
         let fm = FileManager.default
-        let entries = (try? fm.contentsOfDirectory(at: migrationsURL,
-                                                  includingPropertiesForKeys: nil)) ?? []
+        let entries: [URL]
+        do {
+            entries = try fm.contentsOfDirectory(at: migrationsURL,
+                                                 includingPropertiesForKeys: nil)
+        } catch {
+            // A missing or unreadable Migrations directory is a packaging bug,
+            // not "no migrations to run" — surface it instead of silently
+            // leaving the schema uncreated.
+            throw MigratorError.resourcesUnavailable
+        }
         let sqlFiles = entries.filter { $0.pathExtension.lowercased() == "sql" }
 
         var versioned: [(version: Int, url: URL)] = []

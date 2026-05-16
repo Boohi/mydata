@@ -1,4 +1,5 @@
-PRAGMA foreign_keys = ON;
+-- PRAGMA foreign_keys is set by Store at connection time; not repeated here
+-- because pragma statements inside an explicit transaction are no-ops.
 
 CREATE TABLE IF NOT EXISTS apps (
     bundle_id  TEXT PRIMARY KEY,

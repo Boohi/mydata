@@ -18,17 +18,26 @@ let dbPath: String = ProcessInfo.processInfo.environment["MYDATA_DB"]
 let writer: Writer
 let sweeper: Sweeper
 do {
-    let store = try Store(path: dbPath)
-    let migrator = Migrator(store: store)
+    let writerStore = try Store(path: dbPath)
+    let migrator = Migrator(store: writerStore)
     try migrator.migrate()
-    writer = Writer(store: store)
-    sweeper = Sweeper(store: store)
+    writer = Writer(store: writerStore)
+    // Sweeper opens its own connection so the timer queue never contends with
+    // the writer actor on a shared sqlite3 handle (see Store: not thread-safe).
+    sweeper = try Sweeper(dbPath: dbPath)
 } catch {
     fputs("mydata-daemon failed to open store at \(dbPath): \(error)\n", stderr)
     exit(1)
 }
 
-Task { await writer.start() }
+// Start the writer's background flush loop *before* the listener opens, so no
+// appended events sit around in the actor's pending buffer waiting for start().
+let startup = DispatchSemaphore(value: 0)
+Task {
+    await writer.start()
+    startup.signal()
+}
+startup.wait()
 sweeper.start()
 
 let listener = Listener(socketPath: socketPath) { message in

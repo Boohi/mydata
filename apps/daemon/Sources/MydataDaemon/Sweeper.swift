@@ -10,9 +10,20 @@ public final class Sweeper {
     private let queue = DispatchQueue(label: "io.mydata.daemon.sweeper")
     private var timer: DispatchSourceTimer?
 
+    /// Test-only: share a ``Store`` with the caller. Production code must use
+    /// ``init(dbPath:interval:)`` so the sweeper holds its own SQLite
+    /// connection — ``Store`` is not safe to use from multiple threads, and
+    /// the writer + sweeper run on different executors.
     public init(store: Store, interval: TimeInterval = 600) {
         self.store = store
         self.interval = interval
+    }
+
+    /// Production constructor: opens a dedicated ``Store`` on the daemon's
+    /// internal sweeper queue, isolated from the writer's connection.
+    public convenience init(dbPath: String, interval: TimeInterval = 600) throws {
+        let store = try Store(path: dbPath)
+        self.init(store: store, interval: interval)
     }
 
     /// Starts the periodic sweep timer. Idempotent.

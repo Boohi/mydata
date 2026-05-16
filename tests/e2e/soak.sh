@@ -15,7 +15,15 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$REPO_ROOT"
 
 WORK="$(mktemp -d -t mydata-soak.XXXXXX)"
-trap 'kill %1 2>/dev/null || true; rm -rf "$WORK"' EXIT
+DAEMON_PID=""
+cleanup() {
+  if [[ -n "$DAEMON_PID" ]]; then
+    kill "$DAEMON_PID" 2>/dev/null || true
+    wait "$DAEMON_PID" 2>/dev/null || true
+  fi
+  rm -rf "$WORK"
+}
+trap cleanup EXIT
 
 SOCK="$WORK/daemon.sock"
 DB="$WORK/mydata.db"
@@ -29,6 +37,7 @@ DAEMON_BIN="$(swift build --package-path apps/daemon --show-bin-path)/mydata-dae
 
 echo "soak: starting daemon (sock=$SOCK db=$DB)"
 "$DAEMON_BIN" &
+DAEMON_PID=$!
 sleep 1
 
 TALKER="tests/e2e/loopback-talker.mjs"

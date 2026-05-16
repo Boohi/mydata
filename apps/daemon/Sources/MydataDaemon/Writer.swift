@@ -76,11 +76,13 @@ public actor Writer {
         do {
             try writeBatch(batch)
         } catch {
+            // Drop the batch rather than re-queue. A poison row would otherwise
+            // re-fail every flush tick (every 250 ms) and block all subsequent
+            // events behind it. We log and move on; #20 will add structured
+            // metrics for dropped events.
             FileHandle.standardError.write(
-                Data("writer batch failed: \(error)\n".utf8)
+                Data("writer batch failed (dropping \(batch.count) events): \(error)\n".utf8)
             )
-            // Re-insert at front so we don't lose events; future flush retries.
-            pending.insert(contentsOf: batch, at: 0)
         }
     }
 
