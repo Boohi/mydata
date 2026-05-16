@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "mydata",
-        "width": 1024,
-        "height": 700
+        "title": "myData",
+        "width": 1200,
+        "height": 780,
+        "minWidth": 1000,
+        "minHeight": 640
       }
     ],
     "security": {
