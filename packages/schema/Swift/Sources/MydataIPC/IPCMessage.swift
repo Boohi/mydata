@@ -80,9 +80,23 @@ public struct FlowEventPayload: Sendable, Equatable {
     }
 }
 
+public struct DNSQueryPayload: Sendable, Equatable {
+    public let timestampNanos: Int64
+    public let qtype: UInt16
+    public let qname: String  // ASCII/IDN-A presentation, max 253 bytes
+
+    public init(timestampNanos: Int64, qtype: UInt16, qname: String) {
+        precondition(qname.utf8.count <= 253, "DNS qname exceeds 253 bytes")
+        self.timestampNanos = timestampNanos
+        self.qtype = qtype
+        self.qname = qname
+    }
+}
+
 public enum IPCMessage: Sendable, Equatable {
     case flowStarted(FlowEventPayload)
     case flowEnded(FlowEventPayload)
+    case dnsQueried(DNSQueryPayload)
     case ping
     case pong
     /// Surfaced when the codec encounters an unknown type code so the receiver
