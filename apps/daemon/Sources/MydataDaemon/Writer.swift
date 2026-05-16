@@ -50,11 +50,11 @@ public actor Writer {
         flushTask = nil
     }
 
-    /// Enqueue a message. `flowStarted` / `flowEnded` are batched; all other
-    /// message kinds are silently dropped.
+    /// Enqueue a message. `flowStarted`, `flowEnded`, and `dnsQueried` are
+    /// batched; all other message kinds are silently dropped.
     public func append(_ msg: IPCMessage) {
         switch msg {
-        case .flowStarted, .flowEnded:
+        case .flowStarted, .flowEnded, .dnsQueried:
             pending.append(msg)
             if pending.count >= batchSize {
                 flushNow()
@@ -98,9 +98,12 @@ public actor Writer {
                 "UPDATE flows SET ended_ns = ?2 " +
                 "WHERE flow_id = ?1 AND ended_ns IS NULL;"
             )
+            let insertDNS = "INSERT INTO dns_queries (ts_ns, query_name, qtype) VALUES (?, ?, ?)"
+            let dnsStmt = try store.prepare(insertDNS)
             defer {
                 sqlite3_finalize(ins)
                 sqlite3_finalize(upd)
+                sqlite3_finalize(dnsStmt)
             }
 
             for msg in batch {
@@ -129,6 +132,16 @@ public actor Writer {
                             throw StoreError.step(rc2, "flowEnded fallback insert")
                         }
                         sqlite3_reset(ins)
+                    }
+
+                case let .dnsQueried(p):
+                    sqlite3_reset(dnsStmt)
+                    sqlite3_bind_int64(dnsStmt, 1, p.timestampNanos)
+                    _ = p.qname.withCString { sqlite3_bind_text(dnsStmt, 2, $0, -1, SQLITE_TRANSIENT) }
+                    sqlite3_bind_int(dnsStmt, 3, Int32(p.qtype))
+                    let rc = sqlite3_step(dnsStmt)
+                    guard rc == SQLITE_DONE else {
+                        throw StoreError.step(rc, "insert dns_queries")
                     }
 
                 default:

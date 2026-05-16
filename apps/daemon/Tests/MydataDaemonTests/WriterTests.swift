@@ -67,6 +67,27 @@ final class WriterTests: XCTestCase {
         XCTAssertEqual(sqlite3_step(stmt), SQLITE_DONE)
     }
 
+    func testWritesDNSRow() async throws {
+        let (store, path) = try makeStore()
+        defer { store.close(); cleanup(path) }
+
+        let writer = Writer(store: store, batchSize: 1, flushInterval: .milliseconds(10))
+        await writer.start()
+        defer { Task { await writer.stop() } }
+
+        let payload = DNSQueryPayload(timestampNanos: 1_700_000_000_000_000_000, qtype: 1, qname: "example.com")
+        await writer.append(.dnsQueried(payload))
+        try await Task.sleep(for: .milliseconds(200))
+
+        let stmt = try store.prepare("SELECT ts_ns, query_name, qtype FROM dns_queries")
+        defer { sqlite3_finalize(stmt) }
+        XCTAssertEqual(sqlite3_step(stmt), SQLITE_ROW)
+        XCTAssertEqual(sqlite3_column_int64(stmt, 0), 1_700_000_000_000_000_000)
+        XCTAssertEqual(String(cString: sqlite3_column_text(stmt, 1)), "example.com")
+        XCTAssertEqual(sqlite3_column_int(stmt, 2), 1)
+        XCTAssertEqual(sqlite3_step(stmt), SQLITE_DONE)
+    }
+
     func test_batch_flushesAt10Events() async throws {
         let (store, path) = try makeStore()
         defer { store.close(); cleanup(path) }
