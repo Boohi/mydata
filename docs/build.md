@@ -116,3 +116,7 @@ systemextensionsctl uninstall <team-id> io.mydata.extension
 ## Sign and notarize
 
 (Release-pipeline details land in issue #26.)
+
+## Soak test
+
+`tests/e2e/soak.sh` drives the daemon end-to-end against a temporary socket and database. It defaults to `SOAK_MINUTES=5` for a quick smoke run; set `SOAK_MINUTES=1440` to perform the full 24-hour soak referenced in issue #19's acceptance criteria. The harness skips gracefully with `soak: loopback-talker not present, skipping` when `tests/e2e/loopback-talker.mjs` is missing, since that traffic generator is a separate, future deliverable.

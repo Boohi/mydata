@@ -75,6 +75,8 @@ jobs:
         run: swift test --package-path apps/extension
       - name: Test daemon
         run: swift test --package-path apps/daemon
+      - name: Check migrations mirror
+        run: bash tests/check-migrations-mirror.sh
 
   privacy-paranoia:
     runs-on: ubuntu-latest
