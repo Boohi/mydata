@@ -5,13 +5,34 @@ import os.log
 /// Allows every flow. Logs flow start (and end where the OS surfaces it).
 /// Intentionally minimal — see AGENTS.md "Network Extension Rules":
 /// the extension makes no blocking decisions and does no enrichment.
+@objc(MydataFilterDataProvider)
 public final class MydataFilterDataProvider: NEFilterDataProvider {
 
     private static let log = Logger(subsystem: "io.mydata.extension", category: "filter")
 
     public override func startFilter(completionHandler: @escaping (Error?) -> Void) {
         Self.log.info("mydata filter starting")
-        completionHandler(nil)
+        // Without applying NEFilterSettings with a catch-all rule, handleNewFlow
+        // is never invoked. We need every outbound flow surfaced so we can log it,
+        // even though we always return .allow().
+        let rule = NEFilterRule(
+            networkRule: NENetworkRule(
+                remoteNetwork: nil,
+                remotePrefix: 0,
+                localNetwork: nil,
+                localPrefix: 0,
+                protocol: .any,
+                direction: .outbound
+            ),
+            action: .filterData
+        )
+        let settings = NEFilterSettings(rules: [rule], defaultAction: .allow)
+        apply(settings) { error in
+            if let error {
+                Self.log.error("apply filter settings failed: \(error.localizedDescription, privacy: .public)")
+            }
+            completionHandler(error)
+        }
     }
 
     public override func stopFilter(
