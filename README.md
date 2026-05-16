@@ -29,3 +29,4 @@ See [GitHub Issues](https://github.com/Boohi/mydata/issues) and the [v0.1 milest
 ## License
 
 AGPL-3.0. See [LICENSE](LICENSE).
+
