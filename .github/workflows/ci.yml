@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  docs-sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required docs exist
+        run: |
+          test -f AGENTS.md
+          test -f CLAUDE.md
+          test -f docs/privacy-promise.md
+          test -f docs/architecture.md
+          test -f docs/build.md
+          test -f docs/github-project-management.md
+          test -f LICENSE
+          test -f README.md
+          test -f SECURITY.md
+          echo "All required docs present."
+
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find dead relative links in markdown
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r -d '' f; do
+            while IFS= read -r link; do
+              path="${link%%#*}"
+              [[ -z "$path" ]] && continue
+              [[ "$path" =~ ^https?:// ]] && continue
+              dir=$(dirname "$f")
+              target="$dir/$path"
+              if [[ ! -e "$target" ]]; then
+                echo "DEAD: $f -> $link"
+                fail=1
+              fi
+            done < <(grep -oE '\]\([^)]+\)' "$f" | sed 's/^](\(.*\))/\1/')
+          done < <(find . -name '*.md' -not -path './node_modules/*' -print0)
+          exit $fail
