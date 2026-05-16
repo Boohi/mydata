@@ -50,9 +50,29 @@ on your local Mac, see "Loading the extension in dev mode" below.
 
 ### Daemon (`apps/daemon`)
 
+Build and test:
+
 ```bash
 swift build --package-path apps/daemon
 swift test  --package-path apps/daemon
+```
+
+Run locally (foreground):
+
+```bash
+swift run --package-path apps/daemon mydata-daemon
+```
+
+The daemon creates `~/Library/Application Support/mydata/daemon.sock` and
+prints one line per received IPC message to stdout. Override the socket
+path for tests via `MYDATA_SOCK=/tmp/foo.sock`.
+
+To install as a LaunchAgent (out of scope for routine dev; release pipeline
+in #26 will automate this):
+
+```bash
+cp scripts/launchd/io.mydata.daemon.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/io.mydata.daemon.plist
 ```
 
 ### UI (`apps/ui`)

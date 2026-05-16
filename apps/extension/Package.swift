@@ -7,13 +7,20 @@ let package = Package(
     products: [
         .library(name: "MydataExtension", targets: ["MydataExtension"]),
     ],
+    dependencies: [
+        .package(name: "MydataIPC", path: "../../packages/schema/Swift"),
+    ],
     targets: [
         .target(
             name: "MydataExtension",
+            dependencies: [.product(name: "MydataIPC", package: "MydataIPC")],
             linkerSettings: [
                 .linkedFramework("NetworkExtension", .when(platforms: [.macOS])),
             ]
         ),
-        .testTarget(name: "MydataExtensionTests", dependencies: ["MydataExtension"]),
+        .testTarget(
+            name: "MydataExtensionTests",
+            dependencies: ["MydataExtension"]
+        ),
     ]
 )

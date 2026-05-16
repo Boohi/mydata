@@ -41,3 +41,23 @@ mydata splits into three processes, each with one clear responsibility:
 - The system extension is intentionally tiny so it is easy to audit. The privacy audience will read this code.
 - The daemon owns enrichment + storage so the extension stays minimal.
 - Tauri's UI is portable: when we later add Windows (WFP) or Linux (eBPF/netfilter) backends, only the extension + daemon swap; the entire React UI is reused.
+
+## Extension ↔ Daemon IPC
+
+The extension is a client; the daemon is a server. Transport is a Unix
+domain socket at `~/Library/Application Support/mydata/daemon.sock`. The
+wire format above the transport is documented in
+[`packages/schema/ipc.md`](../packages/schema/ipc.md) and implemented by the
+`MydataIPC` Swift package.
+
+Reconnect: on failure, the extension's `IPCClient` reconnects with
+exponential backoff capped at 5 seconds. Lost messages during the gap are
+acceptable in v0.1 — we trade durability for simplicity.
+
+Liveness: the daemon will accept `ping` frames and reply with `pong`. Not
+exercised in v0.1 but the codec already handles them.
+
+## Privacy invariants
+
+See `docs/privacy-promise.md`. The extension/daemon pair has zero outbound
+network calls; the privacy-paranoia harness enforces this in CI.

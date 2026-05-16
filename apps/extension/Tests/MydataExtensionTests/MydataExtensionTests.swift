@@ -39,3 +39,17 @@ final class FlowEventTests: XCTestCase {
         XCTAssertFalse(event.logLine.contains("\n"))
     }
 }
+
+import MydataIPC
+
+final class IPCClientBackoffTests: XCTestCase {
+    func testBackoffDoubles() {
+        XCTAssertEqual(IPCClient.nextBackoff(current: 0.1, cap: 5.0), 0.2, accuracy: 0.001)
+        XCTAssertEqual(IPCClient.nextBackoff(current: 1.0, cap: 5.0), 2.0, accuracy: 0.001)
+    }
+
+    func testBackoffCapsAtFiveSeconds() {
+        XCTAssertEqual(IPCClient.nextBackoff(current: 4.0, cap: 5.0), 5.0, accuracy: 0.001)
+        XCTAssertEqual(IPCClient.nextBackoff(current: 10.0, cap: 5.0), 5.0, accuracy: 0.001)
+    }
+}

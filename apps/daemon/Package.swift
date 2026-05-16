@@ -6,9 +6,23 @@ let package = Package(
     platforms: [.macOS(.v13)],
     products: [
         .library(name: "MydataDaemon", targets: ["MydataDaemon"]),
+        .executable(name: "mydata-daemon", targets: ["mydata-daemon"]),
+    ],
+    dependencies: [
+        .package(name: "MydataIPC", path: "../../packages/schema/Swift"),
     ],
     targets: [
-        .target(name: "MydataDaemon"),
-        .testTarget(name: "MydataDaemonTests", dependencies: ["MydataDaemon"]),
+        .target(
+            name: "MydataDaemon",
+            dependencies: [.product(name: "MydataIPC", package: "MydataIPC")]
+        ),
+        .executableTarget(
+            name: "mydata-daemon",
+            dependencies: ["MydataDaemon"]
+        ),
+        .testTarget(
+            name: "MydataDaemonTests",
+            dependencies: ["MydataDaemon"]
+        ),
     ]
 )
