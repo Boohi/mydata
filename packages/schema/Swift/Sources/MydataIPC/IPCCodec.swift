@@ -26,10 +26,21 @@ public enum IPCCodec {
         switch message {
         case .flowStarted(let p): return (0x01, encodeFlowPayload(p))
         case .flowEnded(let p):   return (0x02, encodeFlowPayload(p))
+        case .dnsQueried(let p):  return (0x03, encodeDNSPayload(p))
         case .ping:               return (0x10, Data())
         case .pong:               return (0x11, Data())
         case .unknown(let t):     return (t, Data())
         }
+    }
+
+    private static func encodeDNSPayload(_ p: DNSQueryPayload) -> Data {
+        let nameBytes = Array(p.qname.utf8)
+        var d = Data(capacity: 8 + 2 + 2 + nameBytes.count)
+        d.appendBE(p.timestampNanos)
+        d.appendBE(p.qtype)
+        d.appendBE(UInt16(nameBytes.count))
+        d.append(contentsOf: nameBytes)
+        return d
     }
 
     private static func encodeFlowPayload(_ p: FlowEventPayload) -> Data {
@@ -67,11 +78,32 @@ public enum IPCCodec {
         switch type {
         case 0x01: message = .flowStarted(try decodeFlowPayload(payload))
         case 0x02: message = .flowEnded(try decodeFlowPayload(payload))
+        case 0x03: message = .dnsQueried(try decodeDNSPayload(payload))
         case 0x10: message = .ping
         case 0x11: message = .pong
         default:   message = .unknown(type: type)
         }
         return (message, frameEnd)
+    }
+
+    private static func decodeDNSPayload(_ d: Data) throws -> DNSQueryPayload {
+        guard d.count >= 12 else {
+            throw IPCDecodeError.malformedPayload("dns payload header truncated (\(d.count) < 12)")
+        }
+        let base = d.startIndex
+        let ts: Int64     = d.readBE(at: 0,  as: Int64.self)
+        let qtype: UInt16 = d.readBE(at: 8,  as: UInt16.self)
+        let nameLen = Int(d.readBE(at: 10, as: UInt16.self))
+        guard d.count == 12 + nameLen else {
+            throw IPCDecodeError.malformedPayload(
+                "dns payload size mismatch: header says name_len=\(nameLen), trailer=\(d.count - 12)"
+            )
+        }
+        let nameBytes = Array(d[(base + 12) ..< (base + 12 + nameLen)])
+        guard let qname = String(bytes: nameBytes, encoding: .utf8) else {
+            throw IPCDecodeError.malformedPayload("dns qname is not valid UTF-8")
+        }
+        return DNSQueryPayload(timestampNanos: ts, qtype: qtype, qname: qname)
     }
 
     private static func decodeFlowPayload(_ d: Data) throws -> FlowEventPayload {
