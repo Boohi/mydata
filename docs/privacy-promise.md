@@ -5,6 +5,8 @@ mydata exists to help you see where your data goes. It would be ironic — and d
 ## What we guarantee
 
 1. **Zero outbound network calls.** The app, the daemon, and the system extension never connect to a remote server. There is no telemetry, no crash reporting service, no analytics, no auto-update phone-home in v0.1. Enforced by `tests/privacy-paranoia.test.ts` running in CI on every PR.
+
+   > **DNS proxy exception.** `NEDNSProxyProvider` must forward intercepted DNS packets to the upstream resolver the OS has already configured (typically the router or a user-chosen DNS server). These forwarding connections carry *your* DNS traffic, not developer telemetry — they replace the connections that would have happened anyway. The privacy paranoia test cannot cover system extension binaries (the sandbox tool cannot enter the extension's process space), so this exception is documented here rather than enforced by CI.
 2. **All data stays on your Mac.** The SQLite database lives at `~/Library/Application Support/mydata/events.db` and is never transmitted off-device by us.
 3. **No payload inspection.** We never install a root CA and we never decrypt your traffic. We only see flow metadata (process, remote address, byte counts, DNS query names).
 4. **GeoIP data is bundled, not fetched.** We do not make geo lookups against a remote service. The DB-IP Lite database ships with the app.
