@@ -12,7 +12,7 @@ We use GitHub Issues, milestones, labels, and a project board as the canonical e
 
 ## Labels
 
-Declarative source: `.github/labels.yml`. Applied by `scripts/setup-labels.sh`.
+Declarative source: `.github/labels.json`. Applied by `scripts/setup-labels.sh`.
 
 - `type:slice` — a shippable vertical slice of behavior (the main type).
 - `type:bug` — defect.

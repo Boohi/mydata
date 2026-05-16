@@ -1,0 +1,21 @@
+[
+  { "name": "type:slice", "color": "0E8A16", "description": "A shippable vertical slice of behavior" },
+  { "name": "type:bug", "color": "D73A4A", "description": "Defect" },
+  { "name": "type:chore", "color": "C5DEF5", "description": "Internal work with no user-visible change" },
+  { "name": "type:docs", "color": "0075CA", "description": "Docs-only change" },
+  { "name": "priority:p1", "color": "B60205", "description": "Highest priority" },
+  { "name": "priority:p2", "color": "D93F0B", "description": "Medium priority" },
+  { "name": "priority:p3", "color": "FBCA04", "description": "Lower priority" },
+  { "name": "area:extension", "color": "5319E7", "description": "macOS system extension" },
+  { "name": "area:daemon", "color": "5319E7", "description": "Swift daemon" },
+  { "name": "area:ui", "color": "5319E7", "description": "Tauri/React UI" },
+  { "name": "area:packaging", "color": "5319E7", "description": "Build, sign, notarize, release" },
+  { "name": "area:docs", "color": "5319E7", "description": "Documentation" },
+  { "name": "area:ci", "color": "5319E7", "description": "CI/CD" },
+  { "name": "blocked", "color": "000000", "description": "Blocked by another issue" },
+  { "name": "good-first-issue", "color": "7057FF", "description": "Newcomer-friendly" },
+  { "name": "risk:privacy", "color": "B60205", "description": "Touches privacy-promise surface; extra review required" },
+  { "name": "risk:signing", "color": "B60205", "description": "Touches code signing or notarization" },
+  { "name": "milestone:v0.1", "color": "0E8A16", "description": "Targeted at the v0.1 milestone" },
+  { "name": "milestone:post-v0.1", "color": "C5DEF5", "description": "Post-v0.1 backlog" }
+]
