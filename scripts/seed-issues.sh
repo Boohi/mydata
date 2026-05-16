@@ -2,7 +2,16 @@
 # Idempotently create GitHub issues from docs/issues/**/*.md.
 # Each file has YAML front-matter (title, labels, milestone) and a markdown body.
 # Re-running this script does NOT create duplicates: it looks up by exact title.
+#
+# REQUIRES: bash >= 4 (uses `declare -A` and `mapfile`). macOS ships bash 3.2;
+# install a newer bash via `brew install bash` and invoke as
+# `/opt/homebrew/bin/bash scripts/seed-issues.sh`.
 set -euo pipefail
+
+if ((BASH_VERSINFO[0] < 4)); then
+  echo "ERROR: bash >= 4 required (found $BASH_VERSION). Install with: brew install bash" >&2
+  exit 1
+fi
 
 REPO="${REPO:-Boohi/mydata}"
 

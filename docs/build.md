@@ -7,6 +7,7 @@
 - Node.js 20+ and npm 10+.
 - Rust toolchain (for Tauri 2): `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 - Apple Developer account for signing the system extension. The Team ID goes in `scripts/signing.env` (gitignored).
+- For repo-management scripts (`scripts/seed-issues.sh`): bash >= 4 (`brew install bash`) and `yq` (`brew install yq`). The default macOS bash 3.2 is too old.
 
 ## First-time setup
 
