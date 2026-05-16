@@ -48,3 +48,28 @@ jobs:
             done < <(echo "$stripped" | grep -oE '\]\([^)]+\)' | sed 's/^](\(.*\))/\1/')
           done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -print0)
           exit $fail
+
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run format:check
+
+  swift:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Test extension
+        run: swift test --package-path apps/extension
+      - name: Test daemon
+        run: swift test --package-path apps/daemon

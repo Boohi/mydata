@@ -1,0 +1,14 @@
+node_modules
+dist
+.build
+target
+apps/ui/src-tauri/target
+apps/ui/src-tauri/gen
+package-lock.json
+*.lock
+LICENSE
+CODE_OF_CONDUCT.md
+docs/issues/
+docs/superpowers/
+.github/ISSUE_TEMPLATE/
+.github/labels.json
