@@ -1,0 +1,5 @@
+{
+  "binaries": [],
+  "comment": "Each entry: { path: relative-to-repo, args: [] }. Empty until #16/#17 ship binaries.",
+  "version": 1
+}
