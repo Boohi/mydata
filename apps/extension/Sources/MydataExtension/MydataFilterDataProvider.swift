@@ -1,5 +1,6 @@
 import Foundation
 import NetworkExtension
+import MydataIPC
 import os.log
 
 /// Allows every flow. Logs flow start (and end where the OS surfaces it).
@@ -9,6 +10,16 @@ import os.log
 public final class MydataFilterDataProvider: NEFilterDataProvider {
 
     private static let log = Logger(subsystem: "io.mydata.extension", category: "filter")
+
+    private let ipcClient: IPCClient
+    private let nextFlowId = FlowIdAllocator()
+
+    public override init() {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let path = support.appendingPathComponent("mydata/daemon.sock").path
+        self.ipcClient = IPCClient(socketPath: path)
+        super.init()
+    }
 
     public override func startFilter(completionHandler: @escaping (Error?) -> Void) {
         Self.log.info("mydata filter starting")
@@ -44,44 +55,51 @@ public final class MydataFilterDataProvider: NEFilterDataProvider {
     }
 
     public override func handleNewFlow(_ flow: NEFilterFlow) -> NEFilterNewFlowVerdict {
-        if let event = Self.event(for: flow, phase: .start) {
-            Self.log.info("\(event.logLine, privacy: .public)")
+        if let payload = Self.payload(for: flow, nextId: nextFlowId.next()) {
+            Task { [ipcClient] in
+                await ipcClient.send(.flowStarted(payload))
+            }
+            Self.log.info("flow id=\(payload.flowId, privacy: .public)")
         }
         return .allow()
     }
 
-    private static func event(for flow: NEFilterFlow, phase: FlowPhase) -> FlowEvent? {
-        let (src, dst, proto): (String, String, String)
-        if let socket = flow as? NEFilterSocketFlow {
-            src = socket.localEndpoint.map(describe) ?? "unknown"
-            dst = socket.remoteEndpoint.map(describe) ?? "unknown"
-            proto = protocolName(socket.socketProtocol)
-        } else {
-            src = "unknown"
-            dst = flow.url?.absoluteString ?? "unknown"
-            proto = "browser"
+    private static func payload(for flow: NEFilterFlow, nextId: UInt64) -> FlowEventPayload? {
+        guard let socket = flow as? NEFilterSocketFlow,
+              let remote = socket.remoteEndpoint as? NWHostEndpoint,
+              let local = socket.localEndpoint as? NWHostEndpoint else {
+            return nil
         }
-        return FlowEvent(
-            phase: phase,
-            sourceEndpoint: src,
-            remoteEndpoint: dst,
-            protocolName: proto,
-            timestamp: Date()
+        let family: IPCAddressFamily = remote.hostname.contains(":") ? .ipv6 : .ipv4
+        let proto: UInt8 = socket.socketProtocol == IPPROTO_UDP ? 17 : 6
+        let src = (try? address(from: local.hostname, family: family)) ?? IPCAddress(bytes: Array(repeating: 0, count: 16))
+        let dst = (try? address(from: remote.hostname, family: family)) ?? IPCAddress(bytes: Array(repeating: 0, count: 16))
+        return FlowEventPayload(
+            flowId: nextId,
+            timestampNanos: Int64(Date().timeIntervalSince1970 * 1_000_000_000),
+            family: family,
+            protocolNumber: proto,
+            sourcePort: UInt16(local.port) ?? 0,
+            destPort: UInt16(remote.port) ?? 0,
+            sourceAddress: src,
+            destAddress: dst
         )
     }
 
-    private static func describe(_ endpoint: NWEndpoint) -> String {
-        if let host = endpoint as? NWHostEndpoint {
-            return "\(host.hostname):\(host.port)"
+    private static func address(from hostname: String, family: IPCAddressFamily) throws -> IPCAddress {
+        switch family {
+        case .ipv4: return try .ipv4(hostname)
+        case .ipv6: return try .ipv6(hostname)
         }
-        return String(describing: endpoint)
     }
+}
 
-    private static func protocolName(_ proto: Int32) -> String {
-        switch proto {
-        case Int32(IPPROTO_TCP): return "tcp"
-        case Int32(IPPROTO_UDP): return "udp"
-        default: return "other(\(proto))"
-        }
+final class FlowIdAllocator: @unchecked Sendable {
+    private var counter: UInt64 = 0
+    private let lock = NSLock()
+    func next() -> UInt64 {
+        lock.lock(); defer { lock.unlock() }
+        counter &+= 1
+        return counter
     }
 }
