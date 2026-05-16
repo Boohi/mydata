@@ -28,6 +28,7 @@ Every frame on the wire is:
 | ---- | ----------- | ------------------ |
 | 0x01 | flowStarted | extension → daemon |
 | 0x02 | flowEnded   | extension → daemon |
+| 0x03 | dnsQueried  | extension → daemon |
 | 0x10 | ping        | either             |
 | 0x11 | pong        | either             |
 
@@ -56,6 +57,27 @@ Total payload = 54 bytes. Total frame = 4 (length) + 2 (version) + 1 (type) + 54
 ### `ping` (0x10) and `pong` (0x11)
 
 Empty payload. Used for liveness checks and to keep the connection warm.
+
+### `dnsQueried` (0x03)
+
+Sent once per DNS query observed by the DNS proxy provider. Resolved-IP
+enrichment happens daemon-side (issue #20 joins this against `flows`).
+
+```
++---------+---------+----------+----------+
+| 8 bytes | 2 bytes | 2 bytes  | variable |
+| ts_ns   | qtype   | name_len | qname    |
++---------+---------+----------+----------+
+```
+
+- `ts_ns` (int64, BE): Unix epoch nanoseconds at the time the query was seen.
+- `qtype` (uint16, BE): IANA DNS RR type (1 = A, 28 = AAAA, 5 = CNAME, etc.).
+- `name_len` (uint16, BE): byte length of `qname`. Max 253 (DNS spec).
+- `qname` (utf8): query name in presentation form. For internationalised
+  domains, the extension sends the punycode (IDN-A) form because that is
+  what the wire protocol carries.
+
+Total payload = 12 + name_len bytes. Maximum frame = 4 + 2 + 1 + 12 + 253 = 272 bytes.
 
 ## Errors
 
