@@ -8,7 +8,12 @@ let package = Package(
         .library(name: "MydataExtension", targets: ["MydataExtension"]),
     ],
     targets: [
-        .target(name: "MydataExtension"),
+        .target(
+            name: "MydataExtension",
+            linkerSettings: [
+                .linkedFramework("NetworkExtension", .when(platforms: [.macOS])),
+            ]
+        ),
         .testTarget(name: "MydataExtensionTests", dependencies: ["MydataExtension"]),
     ]
 )
