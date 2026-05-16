@@ -14,7 +14,8 @@ let package = Package(
     targets: [
         .target(
             name: "MydataDaemon",
-            dependencies: [.product(name: "MydataIPC", package: "MydataIPC")]
+            dependencies: [.product(name: "MydataIPC", package: "MydataIPC")],
+            resources: [.copy("Migrations")]
         ),
         .executableTarget(
             name: "mydata-daemon",
