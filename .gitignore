@@ -8,3 +8,24 @@ target/
 .env
 .env.local
 .tauri/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Swift
+.build/
+.swiftpm/
+Package.resolved
+
+# Rust / Tauri
+target/
+apps/ui/src-tauri/target/
+apps/ui/src-tauri/gen/
+
+# Local secrets
+scripts/signing.env
+
+# OS
+.DS_Store
