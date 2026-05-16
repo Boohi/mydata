@@ -73,3 +73,17 @@ jobs:
         run: swift test --package-path apps/extension
       - name: Test daemon
         run: swift test --package-path apps/daemon
+
+  privacy-paranoia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Verify unshare is available
+        run: unshare --help >/dev/null
+      - name: Run privacy paranoia harness
+        run: |
+          node tests/privacy-paranoia/run.mjs
+          node --test tests/privacy-paranoia/run.test.mjs

@@ -26,7 +26,7 @@ mydata exists to help you see where your data goes. It would be ironic — and d
 ## How to verify
 
 - Read the source: <https://github.com/Boohi/mydata>.
-- Run the privacy paranoia test yourself: `npm run test:privacy`.
+- Run the privacy paranoia test yourself: `npm run test:privacy`. On Linux it actively sandboxes every shipped binary in a network namespace and asserts none can connect; on macOS it runs in advisory mode (see [`tests/privacy-paranoia/README.md`](../tests/privacy-paranoia/README.md)).
 - Use Little Snitch or LuLu to confirm mydata makes no outbound connections.
 - Inspect your `~/Library/Application Support/mydata/events.db` directly with the `sqlite3` CLI — it is your data.
 
