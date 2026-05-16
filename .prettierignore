@@ -9,3 +9,6 @@ package-lock.json
 LICENSE
 CODE_OF_CONDUCT.md
 docs/issues/
+docs/superpowers/
+.github/ISSUE_TEMPLATE/
+.github/labels.json

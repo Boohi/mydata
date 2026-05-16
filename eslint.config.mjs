@@ -10,18 +10,18 @@ export default [
       "**/.tauri/**",
       "**/target/**",
       "**/.build/**",
-      "apps/ui/src-tauri/target/**"
-    ]
+      "apps/ui/src-tauri/target/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
-      globals: { ...globals.browser, ...globals.node }
+      globals: { ...globals.browser, ...globals.node },
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }]
-    }
-  }
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+    },
+  },
 ];
