@@ -65,32 +65,24 @@ public final class MydataDNSProxyProvider: NEDNSProxyProvider {
                 flow.closeWriteWithError(error)
                 return
             }
-            for datagram in datagrams {
+            for (datagram, endpoint) in zip(datagrams, endpoints) {
                 self.emitDNSEvent(from: datagram)
-            }
-            // Resolve upstream endpoint (the OS-supplied destination).
-            guard let host = (endpoints.first as? NWHostEndpoint) else {
-                flow.closeReadWithError(nil)
-                flow.closeWriteWithError(nil)
-                return
-            }
-            // Send to upstream, then read response and pump back.
-            let conn = NWConnection(
-                host: Network.NWEndpoint.Host(host.hostname),
-                port: Network.NWEndpoint.Port(host.port) ?? 53,
-                using: .udp
-            )
-            conn.start(queue: .global())
-            for datagram in datagrams {
+                guard let host = endpoint as? NWHostEndpoint else { continue }
+                let conn = NWConnection(
+                    host: Network.NWEndpoint.Host(host.hostname),
+                    port: Network.NWEndpoint.Port(host.port) ?? 53,
+                    using: .udp
+                )
+                conn.start(queue: .global())
                 conn.send(content: datagram, completion: .contentProcessed { _ in })
-            }
-            conn.receiveMessage { [weak self] data, _, _, _ in
-                if let data {
-                    flow.writeDatagrams([data], sentBy: [host]) { _ in }
+                conn.receiveMessage { data, _, _, _ in
+                    if let data {
+                        flow.writeDatagrams([data], sentBy: [endpoint]) { _ in }
+                    }
+                    conn.cancel()
                 }
-                conn.cancel()
-                self?.pumpUDP(flow)  // continue with next datagram
             }
+            self.pumpUDP(flow)
         }
     }
 
@@ -134,11 +126,15 @@ public final class MydataDNSProxyProvider: NEDNSProxyProvider {
                 using: .tcp
             )
             conn.start(queue: .global())
-            conn.send(content: data, completion: .contentProcessed { _ in
-                conn.receive(minimumIncompleteLength: 1, maximumLength: 65535) { resp, _, _, _ in
+            conn.send(content: data, completion: .contentProcessed { [weak self] _ in
+                guard let self else {
+                    conn.cancel()
+                    return
+                }
+                conn.receive(minimumIncompleteLength: 1, maximumLength: 65535) { [weak self] resp, _, _, _ in
                     if let resp { flow.write(resp) { _ in } }
                     conn.cancel()
-                    self.pumpTCP(flow)
+                    self?.pumpTCP(flow)
                 }
             })
         }
@@ -148,11 +144,11 @@ public final class MydataDNSProxyProvider: NEDNSProxyProvider {
 
     private func emitDNSEvent(from datagram: Data) {
         guard let question = try? DNSPacket.parseQuestion(datagram) else { return }
-        let payload = DNSQueryPayload(
+        guard let payload = DNSQueryPayload(
             timestampNanos: Int64(Date().timeIntervalSince1970 * 1_000_000_000),
             qtype: question.qtype,
             qname: question.qname
-        )
+        ) else { return }
         Task { [ipcClient] in
             await ipcClient.send(.dnsQueried(payload))
         }

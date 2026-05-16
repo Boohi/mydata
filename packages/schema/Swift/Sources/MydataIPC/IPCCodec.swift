@@ -103,7 +103,10 @@ public enum IPCCodec {
         guard let qname = String(bytes: nameBytes, encoding: .utf8) else {
             throw IPCDecodeError.malformedPayload("dns qname is not valid UTF-8")
         }
-        return DNSQueryPayload(timestampNanos: ts, qtype: qtype, qname: qname)
+        guard let payload = DNSQueryPayload(timestampNanos: ts, qtype: qtype, qname: qname) else {
+            throw IPCDecodeError.malformedPayload("dns qname exceeds 253 bytes")
+        }
+        return payload
     }
 
     private static func decodeFlowPayload(_ d: Data) throws -> FlowEventPayload {

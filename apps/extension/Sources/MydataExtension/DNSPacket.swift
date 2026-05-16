@@ -50,6 +50,8 @@ public enum DNSPacket {
         guard idx + 4 <= data.endIndex else { throw DNSParseError.truncated }
         let qtype = (UInt16(data[idx]) << 8) | UInt16(data[idx + 1])
 
-        return Question(qname: labels.joined(separator: "."), qtype: qtype)
+        let qname = labels.joined(separator: ".")
+        guard qname.utf8.count <= 253 else { throw DNSParseError.invalidLabel }
+        return Question(qname: qname, qtype: qtype)
     }
 }

@@ -85,8 +85,8 @@ public struct DNSQueryPayload: Sendable, Equatable {
     public let qtype: UInt16
     public let qname: String  // ASCII/IDN-A presentation, max 253 bytes
 
-    public init(timestampNanos: Int64, qtype: UInt16, qname: String) {
-        precondition(qname.utf8.count <= 253, "DNS qname exceeds 253 bytes")
+    public init?(timestampNanos: Int64, qtype: UInt16, qname: String) {
+        guard qname.utf8.count <= 253 else { return nil }
         self.timestampNanos = timestampNanos
         self.qtype = qtype
         self.qname = qname

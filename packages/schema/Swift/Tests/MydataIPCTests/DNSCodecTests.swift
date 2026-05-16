@@ -7,7 +7,7 @@ final class DNSCodecTests: XCTestCase {
             timestampNanos: 1_700_000_000_000_000_000,
             qtype: 1,
             qname: "example.com"
-        )
+        )!
         let frame = IPCCodec.encode(.dnsQueried(payload))
         let (decoded, consumed) = try IPCCodec.decode(frame)
         XCTAssertEqual(consumed, frame.count)
@@ -18,7 +18,7 @@ final class DNSCodecTests: XCTestCase {
     }
 
     func testDNSQueriedEmptyName() throws {
-        let payload = DNSQueryPayload(timestampNanos: 0, qtype: 28, qname: "")
+        let payload = DNSQueryPayload(timestampNanos: 0, qtype: 28, qname: "")!
         let frame = IPCCodec.encode(.dnsQueried(payload))
         let (decoded, _) = try IPCCodec.decode(frame)
         XCTAssertEqual(decoded, .dnsQueried(payload))
@@ -26,7 +26,7 @@ final class DNSCodecTests: XCTestCase {
 
     func testDNSQueriedUnicodeName() throws {
         // Punycode form — what a real resolver gets after IDN-A.
-        let payload = DNSQueryPayload(timestampNanos: 42, qtype: 1, qname: "xn--bcher-kva.example")
+        let payload = DNSQueryPayload(timestampNanos: 42, qtype: 1, qname: "xn--bcher-kva.example")!
         let frame = IPCCodec.encode(.dnsQueried(payload))
         let (decoded, _) = try IPCCodec.decode(frame)
         XCTAssertEqual(decoded, .dnsQueried(payload))

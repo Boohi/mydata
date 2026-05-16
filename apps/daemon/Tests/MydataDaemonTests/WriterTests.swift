@@ -75,9 +75,9 @@ final class WriterTests: XCTestCase {
         await writer.start()
         defer { Task { await writer.stop() } }
 
-        let payload = DNSQueryPayload(timestampNanos: 1_700_000_000_000_000_000, qtype: 1, qname: "example.com")
+        let payload = DNSQueryPayload(timestampNanos: 1_700_000_000_000_000_000, qtype: 1, qname: "example.com")!
         await writer.append(.dnsQueried(payload))
-        try await Task.sleep(for: .milliseconds(200))
+        await writer.flush()
 
         let stmt = try store.prepare("SELECT ts_ns, query_name, qtype FROM dns_queries")
         defer { sqlite3_finalize(stmt) }
