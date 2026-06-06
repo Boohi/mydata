@@ -1,0 +1,1 @@
+/home/boohi/apps/shared-ai-config/.github/copilot-instructions.md

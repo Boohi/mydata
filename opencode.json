@@ -1,0 +1,65 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    ".opencode/rules/*.md"
+  ],
+  "mcp": {
+    "smart-coding": {
+      "type": "local",
+      "command": [
+        "smart-coding-mcp",
+        "--workspace",
+        "/home/boohi/apps/mydata"
+      ],
+      "enabled": true
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    },
+    "tavily": {
+      "type": "remote",
+      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey={env:TAVILY_API_KEY}",
+      "enabled": true
+    }
+  },
+  "permission": {
+    "*": "allow",
+    "edit": {
+      "*": "allow"
+    },
+    "patch": "allow",
+    "apply_patch": "allow",
+    "write": {
+      "*": "allow",
+      "*.env": "ask",
+      "*.env.*": "ask"
+    },
+    "webfetch": "allow",
+    "bash": {
+      "*": "allow",
+      "rm -rf *": "deny",
+      "git commit*": "deny",
+      "git push*": "deny"
+    },
+    "read": {
+      "*": "allow",
+      "*.env": "ask",
+      "*.env.*": "ask",
+      "*.env.example": "allow"
+    },
+    "external_directory": {
+      "*": "ask",
+      "/tmp/*": "allow"
+    },
+    "grep": "allow",
+    "glob": "allow",
+    "lsp": "allow",
+    "task": "allow",
+    "skill": "allow",
+    "todoread": "allow",
+    "todowrite": "allow",
+    "doom_loop": "ask"
+  }
+}
