@@ -1,16 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": [
-    ".opencode/rules/*.md"
-  ],
+  "instructions": [".opencode/rules/*.md"],
   "mcp": {
     "smart-coding": {
       "type": "local",
-      "command": [
-        "smart-coding-mcp",
-        "--workspace",
-        "/home/boohi/apps/mydata"
-      ],
+      "command": ["smart-coding-mcp", "--workspace", "/home/boohi/apps/mydata"],
       "enabled": true
     },
     "context7": {
