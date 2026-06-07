@@ -46,7 +46,7 @@ jobs:
                 fail=1
               fi
             done < <(echo "$stripped" | grep -oE '\]\([^)]+\)' | sed 's/^](\(.*\))/\1/')
-          done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -print0)
+          done < <(find . -type f -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -print0)
           exit $fail
 
   node:
