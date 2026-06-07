@@ -13,7 +13,9 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "node --test tests/e2e/*.test.mjs && npm run test --workspaces --if-present",
+    "test:e2e": "node tests/e2e/native-smoke.mjs",
+    "test:e2e:native": "node tests/e2e/native-smoke.mjs --require-swift",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:privacy": "node tests/privacy-paranoia/run.mjs && node --test tests/privacy-paranoia/run.test.mjs"

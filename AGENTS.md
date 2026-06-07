@@ -41,6 +41,7 @@ Run focused checks during development, then run the broader relevant checks befo
 - Lint (UI): `npm run lint`
 - Typecheck (UI): `npm run typecheck`
 - Tests (UI): `npm test`
+- Native e2e smoke: `npm run test:e2e`
 - Tests (Swift): `swift test --package-path apps/extension` and `swift test --package-path apps/daemon`
 - Format check: `npm run format:check`
 - Privacy paranoia test: `npm run test:privacy` (MUST pass before any PR merges)
@@ -65,7 +66,7 @@ If you cannot run a relevant check, state why and what risk remains.
 - `packages/geoip-data/` — bundled DB-IP Lite GeoIP + ASN databases.
 - `docs/` — privacy promise, architecture, build, QA, GitHub policy, specs, plans, issue bodies.
 - `scripts/` — sign, notarize, dev-extension, seed-issues, setup-labels.
-- `tests/` — privacy paranoia, end-to-end loopback talker.
+- `tests/` — privacy paranoia, native e2e smoke, end-to-end loopback talker.
 - `.github/` — workflows, issue/PR templates, declarative labels.
 
 ## Docs To Read
