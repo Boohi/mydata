@@ -47,6 +47,15 @@ Run focused checks during development, then run the broader relevant checks befo
 
 If you cannot run a relevant check, state why and what risk remains.
 
+## Browser Automation
+
+- Use `agent-browser` as the default for ad hoc browser work, local app
+  verification, screenshots, page inspection, clicking, typing, and exploratory
+  UI QA.
+- Use Playwright for committed e2e suites and CI regression coverage.
+- Use Playwright MCP only as fallback when `agent-browser` is unavailable or the
+  task specifically requires the MCP browser surface.
+
 ## Project Map
 
 - `apps/extension/` — Swift system extension (Network Extension + DNS proxy).
