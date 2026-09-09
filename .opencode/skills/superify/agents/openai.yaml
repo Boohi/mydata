@@ -1,0 +1,8 @@
+interface:
+  display_name: "Superify"
+  short_description: "Turn rough ideas into approved tracked goals"
+  brand_color: "#708FFF"
+  default_prompt: "Use $superify to turn this rough idea or note into an approved, tracked project goal."
+
+policy:
+  allow_implicit_invocation: false

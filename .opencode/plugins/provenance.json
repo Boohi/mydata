@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "ownership": "project-owned finite runtime; outside shared portable receipt",
+  "source": {
+    "revision": "cbb71266e6dc1d242c4184cb0d656c06ac5290b5",
+    "packageVersion": "0.16.1",
+    "repository": "https://github.com/Boohi/shared-ai-config.git"
+  },
+  "files": [
+    {
+      "sourcePath": "plugins/continuous-memory.ts",
+      "projectPath": ".opencode/plugins/continuous-memory.ts",
+      "sha256": "219bf19e79257ee2add5b964bcd86d43477bb0c95df49502c081a2834220e010",
+      "inheritedSha256": "219bf19e79257ee2add5b964bcd86d43477bb0c95df49502c081a2834220e010",
+      "mode": "0644",
+      "bytes": 5205,
+      "changed": false,
+      "inheritedMode": "0600"
+    },
+    {
+      "sourcePath": "plugins/docs-check.ts",
+      "projectPath": ".opencode/plugins/docs-check.ts",
+      "sha256": "777a039d8aa67a6aa81010f14f83c401f67cac1e54f8353b1fe6d3268eedc314",
+      "inheritedSha256": "777a039d8aa67a6aa81010f14f83c401f67cac1e54f8353b1fe6d3268eedc314",
+      "mode": "0644",
+      "bytes": 1211,
+      "changed": false,
+      "inheritedMode": "0600"
+    },
+    {
+      "sourcePath": "plugins/docs-list-context.ts",
+      "projectPath": ".opencode/plugins/docs-list-context.ts",
+      "sha256": "30b4c53e766e7f8a8adc9dbfe382c870938a69c1035625342164697cc61fd190",
+      "inheritedSha256": "07569164f8da241917e91c9f272997e399852b633f63f1e4bdd1196b7813774d",
+      "mode": "0644",
+      "bytes": 908,
+      "changed": true,
+      "inheritedMode": "0600"
+    },
+    {
+      "sourcePath": "plugins/package.json",
+      "projectPath": ".opencode/plugins/package.json",
+      "sha256": "675a0be4272a2403c580901e92af6fc3f6353a1b693aa7eaedfd9f51e80fca1f",
+      "inheritedSha256": "675a0be4272a2403c580901e92af6fc3f6353a1b693aa7eaedfd9f51e80fca1f",
+      "mode": "0644",
+      "bytes": 138,
+      "changed": false,
+      "inheritedMode": "0600"
+    }
+  ],
+  "portableDependencies": [
+    {
+      "path": ".ai-scripts/docs-list.sh",
+      "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+      "mode": "100755"
+    },
+    {
+      "path": ".ai-scripts/memory-capture.sh",
+      "sha256": "05c7a7f715745436eb881afc14a169cc736b891a04a9d4b394d6e7cb270a029d",
+      "mode": "100755"
+    },
+    {
+      "path": ".ai-scripts/memory-context.sh",
+      "sha256": "e455537922dbe7d50c56ef37543437409581569b45bb6864e6998e87b6fc4518",
+      "mode": "100755"
+    },
+    {
+      "path": ".ai-scripts/memory/engine.mjs",
+      "sha256": "ecd84375a2bfd680a8811371057eceff1d2cf9e18a540499da6a7a055b36b95c",
+      "mode": "100644"
+    }
+  ],
+  "reviewedDeltas": [
+    "plugins/docs-list-context.ts"
+  ],
+  "providerPolicy": "Existing optional mailbox/OpenCode/toolchain requirements remain separate; no provider installed or activated."
+}

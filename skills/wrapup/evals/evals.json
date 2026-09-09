@@ -1,0 +1,23 @@
+{
+  "skill_name": "wrapup",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/wrapup this feature; I may not return to this chat. Save progress to GitHub and leave follow-ups.",
+      "expected_output": "Inventories state, commits and pushes all inspected safe changes, creates or updates a draft/ready PR as appropriate, posts a structured wrapup note, creates actionable follow-up issues, removes the temporary clean worktree when the durable handoff is complete, and ends with a short pointer to durable GitHub artifacts plus worktree cleanup status.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Wrap up now. I am on main with unfinished WIP, tests failing, and some untracked local files.",
+      "expected_output": "Creates a checkpoint branch before committing safe WIP, excludes secrets/artifacts, records failing tests and untracked blockers, pushes the branch, opens a draft PR or fallback issue, preserves the worktree because unresolved local state remains, and does not discard local work.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "End the session after this CI investigation. Sync everything, update the PR, and file whatever issues are needed.",
+      "expected_output": "Captures investigation findings and commands, pushes committed work, updates the relevant PR with status and verification, links or creates specific follow-up issues for remaining CI failures, and reports any unsynced or blocked state.",
+      "files": []
+    }
+  ]
+}

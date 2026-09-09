@@ -1,0 +1,33 @@
+name: AI context portability
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  portable-context:
+    # Trusted pushes and same-repository PRs may use a unique custom runner label.
+    # Fork PRs always stay on GitHub-hosted Linux.
+    runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && vars.BOOHI_AI_CONTEXT_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Read shared-config revision
+        id: shared
+        run: |
+          node -e "const s=require('./.ai-config.json'); if(!/^[0-9a-f]{40}$/.test(s.source.revision)) process.exit(1); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'revision='+s.source.revision+'\n')"
+      - name: Checkout exact shared verifier
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: Boohi/shared-ai-config
+          ref: ${{ steps.shared.outputs.revision }}
+          path: .shared-ai-config-verifier
+          token: ${{ secrets.BOOHI_SHARED_AI_CONFIG_TOKEN || github.token }}
+          persist-credentials: false
+      - name: Verify tracked portable context
+        run: node .shared-ai-config-verifier/scripts/doctor.mjs --portable --project "$GITHUB_WORKSPACE" --strict

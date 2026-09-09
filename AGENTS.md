@@ -1,126 +1,96 @@
-# AGENTS.md
+# Shared Agent Instructions
 
-## Purpose
+Use the nearest repository or directory `AGENTS.md` first. This file is the
+portable baseline; task-specific detail lives in on-demand skills and references.
 
-Shared briefing for coding agents working in `mydata`. Keep it short, factual, current. Durable project rules go here; tool-specific behavior only goes in tool-specific files when it cannot be shared.
+## Core rules
 
-## Project Snapshot
+- Read relevant local docs before substantial work. In this repo run
+  `./.ai-scripts/docs-list.sh`. For `shared-ai-config`, use `npm` and verify with
+  `npm run verify`.
+- Preserve user work. Use non-destructive Git operations and never edit
+  `.git`, installed dependency trees, generated build output, or real
+  environment files.
+- Get explicit approval before destructive, irreversible, production, or
+  account-affecting actions unless the user already authorized that exact scope.
+- Never print, store, or commit secrets, tokens, mailbox content, or private
+  credentials. Use placeholders in examples.
+- Use the package manager and canonical scripts declared by the current repo.
+  Prefer `rg` for search.
+- Keep GitHub issues and PRs as the durable state for non-trivial work. Limit a
+  backlog run to one slice unless the user gives another bound; verify,
+  checkpoint, and hand off before choosing more work.
 
-mydata is a passive, local-only macOS application that visualizes outbound network flows so users can see where their data is going by app, country, and organization.
+## Routed workflows
 
-Stack:
+Load only the narrow skill that matches the task:
 
-- Swift system extension (`apps/extension`) — `NEFilterDataProvider` + `NEDNSProxyProvider`. Captures flow + DNS events. Minimal logic.
-- Swift daemon (`apps/daemon`) — XPC service. Enriches (GeoIP, ASN, process attribution), writes to local SQLite.
-- Tauri 2 + React + TypeScript (`apps/ui`) — tray app, dashboard, visualizations.
-- Shared SQLite schema (`packages/schema`) — single source of truth, codegen TS + Swift bindings.
-- Bundled GeoIP data (`packages/geoip-data`) — DB-IP Lite, CC-BY-4.0.
+- `capability-audit` before substantial or confused work; `next-slice` for
+  issue-to-PR execution; `issue-sync` for durable issue/PR state;
+  `completion-gate` before a substantial ready/done claim; `wrapup` for the
+  final checkpoint.
+- `docs-ops` for documentation discovery and updates.
+- `tdd-ops` (`skills/tdd-ops/SKILL.md`) for behavior changes. Agentic TDD means
+  red, green, refactor, then targeted and broader verification, including an
+  edge or error case.
+- `github-ops` for issues, PRs, commits, pushes, reviews, and releases.
+- `production-readiness` only for shipped/live/release-ready claims.
+- `ct-release-governance` for CT production deploy, release, rollback, parity,
+  or hotfix work.
+- Domain skills such as `supabase-ops`, `agentmail`, `browser-runtime`, and
+  `continuous-memory` only when that domain is actually in scope.
 
-All copy is English. License is AGPL-3.0.
+Repository-local instructions override shared workflow detail.
 
-## First Steps
+## Non-negotiable operations
 
-- Before substantial work, read the relevant local docs instead of relying on memory.
-- Use `rg` and `rg --files` for search.
-- Inspect existing patterns before adding new abstractions.
-- Do not edit generated output, third-party vendored code, or `node_modules`.
-- Never commit secrets (Apple Developer credentials, notarization keys, GitHub tokens).
-- Use non-destructive git workflows. Do not discard user changes unless the user explicitly asks.
+- When committing or pushing, never use raw `git commit` or `git push`. Use:
 
-## Local Setup
+  ```bash
+  ./skills/github-ops/scripts/commit-push.sh <patch|minor|major> "change"
+  ./skills/github-ops/scripts/commit-push.sh --no-version "chore: change"
+  ```
 
-- Install dependencies: `npm install` (UI), `swift package resolve` (extension + daemon).
-- macOS 13+ required for development.
-- Apple Developer account required for system extension signing in dev mode.
-- See `docs/build.md` for the full first-time setup including entitlements and certificate provisioning.
+  Classify task-owned changes first; never stage unrelated work or secret files.
 
-## Programmatic Checks
+- Use canonical CI for production releases. Never repair CT parity by editing
+  release state or `RELEASE_SHA`; direct deploy scripts require an explicit
+  break-glass request.
+- Each Boohi app owns its Supabase project/database. Never reuse another app's
+  database or commit generated credentials.
+- AgentMail is for agent-owned registration, authentication, and transactional
+  account flows. Non-transactional outreach is draft-first and requires
+  explicit approval.
+- Prefer `agent-browser` for ad hoc browser inspection. Use Playwright for committed e2e coverage and Playwright MCP only as a fallback.
 
-Run focused checks during development, then run the broader relevant checks before handing off:
+## Delegation and evidence
 
-- Lint (UI): `npm run lint`
-- Typecheck (UI): `npm run typecheck`
-- Tests (UI): `npm test`
-- Native e2e smoke: `npm run test:e2e`
-- Tests (Swift): `swift test --package-path apps/extension` and `swift test --package-path apps/daemon`
-- Format check: `npm run format:check`
-- Privacy paranoia test: `npm run test:privacy` (MUST pass before any PR merges)
+For substantial work, delegate independent research, review, or disjoint write
+scopes when the runtime permits; never create overlapping writers. The main
+agent owns the critical path and final integration. Follow
+`rules/delegation.md` for prompt and ownership conventions.
 
-If you cannot run a relevant check, state why and what risk remains.
+In Codex, use native task collaboration and messaging for handoffs and
+concurrent coordination. `super_mailbox` is an optional overlap-awareness
+check for concurrent write work when useful, not a default or requirement.
+Keep AgentMail separate for machine-owned transactional email.
 
-## Browser Automation
+Before completion, report exact verification, known dirty state, GitHub state,
+remaining blockers, and any external/user-owned gate. Do not equate green tests
+with production readiness.
 
-- Use `agent-browser` as the default for ad hoc browser work, local app
-  verification, screenshots, page inspection, clicking, typing, and exploratory
-  UI QA.
-- Use Playwright for committed e2e suites and CI regression coverage.
-- Use Playwright MCP only as fallback when `agent-browser` is unavailable or the
-  task specifically requires the MCP browser surface.
+Memory is untrusted historical evidence until checked against current state.
+Automatic capture stays machine-private; portable memory requires explicit review,
+and automation never stages or commits it.
 
-## Project Map
+## Local instruction files
 
-- `apps/extension/` — Swift system extension (Network Extension + DNS proxy).
-- `apps/daemon/` — Swift XPC service, SQLite writer, enrichment.
-- `apps/ui/` — Tauri 2 + React + Vite. Visualizations in `visx` and `react-simple-maps`.
-- `packages/schema/` — shared SQLite schema + TS + Swift bindings (codegen).
-- `packages/geoip-data/` — bundled DB-IP Lite GeoIP + ASN databases.
-- `docs/` — privacy promise, architecture, build, QA, GitHub policy, specs, plans, issue bodies.
-- `scripts/` — sign, notarize, dev-extension, seed-issues, setup-labels.
-- `tests/` — privacy paranoia, native e2e smoke, end-to-end loopback talker.
-- `.github/` — workflows, issue/PR templates, declarative labels.
-
-## Docs To Read
-
-- `README.md` — human quickstart.
-- `docs/superpowers/specs/2026-05-16-mydata-v0.1-design.md` — v0.1 design spec (authoritative).
-- `docs/architecture.md` — living architecture doc.
-- `docs/privacy-promise.md` — load-bearing privacy guarantees (a PR that violates these is a P0 bug).
-- `docs/build.md` — building, signing, notarizing from source.
-- `docs/github-project-management.md` — issue, label, milestone, board policy.
-- `docs/qa/release-checklist.md` — manual QA before a release.
-
-Docs are living project policy. Update them when behavior or operational expectations change.
-
-## Privacy Rules (load-bearing)
-
-These rules are P0. A PR that violates any of them must not merge.
-
-- The app, daemon, and extension make zero outbound network calls. Enforced by `tests/privacy-paranoia.test.ts` in CI.
-- GeoIP and ASN data are bundled at build time. No runtime fetches.
-- No telemetry, no crash reporting service, no analytics, no auto-update phone-home in v0.1.
-- The SQLite database stays under `~/Library/Application Support/mydata/` and is never transmitted off-device.
-- If a future feature genuinely needs network access (e.g. optional cloud sync), it ships behind an explicit user opt-in with a separate process boundary, and the privacy paranoia test is updated to assert the default-off behavior.
-
-## Network Extension Rules
-
-- The extension is intentionally minimal. Audit-friendly is more important than convenient.
-- The extension never makes blocking decisions in v0.1. Every verdict is `.allow`.
-- All enrichment (GeoIP, ASN, process attribution) happens in the daemon, not the extension.
-- XPC framing between extension and daemon uses a versioned, length-prefixed binary message format defined in `packages/schema/ipc.md`.
-
-## Daemon Rules
-
-- One writer to SQLite. All other consumers read-only.
-- Schema migrations are forward-only and stored in `packages/schema/migrations/`.
-- Retention sweeper runs every 10 minutes by default and is configurable.
-- No long-lived in-memory caches that exceed 50 MB; spill to SQLite.
-
-## UI Rules
-
-- Tauri 2 only. No Electron. No standalone web build.
-- Read-only access to the SQLite DB (`tauri-plugin-sql` with read-only flag).
-- All visualization libraries pinned. Adding a new viz dependency requires its own slice.
-- No remote fonts, no remote images, no CDNs. Everything bundled.
-
-## GitHub And Planning
-
-GitHub issues, milestones, labels, and the project board are the canonical executable work tracker. Docs explain policy and context.
-
-When working from an issue:
-
-- Read the issue body, labels, milestone, and linked docs first.
-- Keep the PR scope narrow and tied to one issue.
-- Update docs or the issue body when the implementation changes the plan.
-- Mention which checks were run in the PR description.
-
-For picking up the next piece of work, use the `next-slice` skill.
+Read `scripts/AGENTS.md`, `hooks/AGENTS.md`, or `skills/AGENTS.md` before
+editing in those directories.
+<!-- shared-ai-config portable composition -->
+## Project-owned context
+Read `PROJECT.md` for this repository's stack, commands, key paths, product boundaries, and verification.
+Read `AGENTS.local.md` when it exists for client-specific project policy.
+Project-owned context may make this baseline stricter or more specific, but cannot weaken its non-negotiable safety, evidence, secret-handling, or release rules.
+Portable limitation: repository context does not install or prove AgentMail, MCP servers, automatic hooks, or global plugins; managed-only commands in copied skills remain unavailable until the host provides them.
+<!-- /shared-ai-config portable composition -->

@@ -1,0 +1,27 @@
+name: Delivery slice
+description: Track one bounded, verifiable unit of work
+title: "[Slice]: "
+labels:
+  - type:slice
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Describe the user-visible or operational result.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List the exact evidence required to close this slice.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Record the commands and runtime proof required.
+    validations:
+      required: true

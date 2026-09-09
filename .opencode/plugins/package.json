@@ -1,0 +1,8 @@
+{
+  "name": "shared-ai-plugins",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/plugin": "1.17.18"
+  }
+}

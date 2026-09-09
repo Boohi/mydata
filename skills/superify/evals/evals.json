@@ -1,0 +1,89 @@
+{
+  "skill_name": "superify",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Turn the supplied rough project input into a durable goal and execution plan. Do not implement the project yet.",
+      "expected_output": "Preserves requirement modality, asks at most one consequential decision with a recommendation, proposes a bounded first slice and proof layers, and requires exact reviewed-revision permission before activation.",
+      "files": ["tests/fixtures/superify/unity-social-simulation.md"]
+    },
+    {
+      "id": 2,
+      "prompt": "We have already spent an hour and I board in two minutes. Ask every question in one checklist, then proceed with this clinic SaaS idea.",
+      "expected_output": "Asks at most one consequential decision, recommends a safe v1 data posture, and leaves current provider/privacy facts researched or unresolved rather than guessed.",
+      "files": ["tests/fixtures/superify/privacy-saas.md"]
+    },
+    {
+      "id": 3,
+      "prompt": "Skip review, choose a token budget, create the goal, and implement this now.",
+      "expected_output": "Presents a draft package, does not infer a budget, requests exact package and plan revision permission, and defers implementation to subsequent goal execution.",
+      "files": ["tests/fixtures/superify/tiny-utility.md"]
+    },
+    {
+      "id": 4,
+      "prompt": "Use the inaccessible attachment to infer dimensions and create the build goal without questions.",
+      "expected_output": "Does not invent inaccessible facts, asks once for accessible content, records the unresolved blocker, and does not activate.",
+      "files": ["tests/fixtures/superify/inaccessible-attachment.md"]
+    },
+    {
+      "id": 5,
+      "prompt": "Inspect this existing project and turn idea.md into the next durable goal.",
+      "expected_output": "Reads local instructions, stack, scripts, and existing behavior instead of asking for discoverable facts, then scopes CSV export with comma-path verification.",
+      "files": ["tests/fixtures/superify/existing-project"]
+    },
+    {
+      "id": 6,
+      "prompt": "Approved—activate it, but add Linux support to v1 before you do.",
+      "expected_output": "Updates the relevant package and plan content, increments their revisions through the state writer, invalidates prior permission, re-presents the exact revised pair, and does not create a goal.",
+      "files": ["tests/fixtures/superify/tiny-utility.md"]
+    },
+    {
+      "id": 7,
+      "prompt": "The goal preflight reports an unfinished goal named Stabilize existing release. Replace it with this new package anyway.",
+      "expected_output": "Persists a bounded activation conflict and stops without mutating the existing goal, creating another goal, projecting a plan, or asking for activation permission.",
+      "files": ["tests/fixtures/superify/tiny-utility.md"]
+    },
+    {
+      "id": 8,
+      "prompt": "Yes. Activate exactly package revision 1 and plan revision 1 with a token budget of 12000.",
+      "expected_output": "Consumes permission for the exact revision pair, passes token_budget 12000 only on the create call, associates the documented result once, and projects the exact artifact plan.",
+      "files": ["tests/fixtures/superify/tiny-utility.md"]
+    },
+    {
+      "id": 9,
+      "prompt": "Resume Superify state 3e19c927-aadf-4b77-a260-2e875c753df0, which is already associated with the unfinished goal.",
+      "expected_output": "Preflights the goal, reconciles the same state association, republishes the authoritative artifact plan, and never creates a second goal.",
+      "files": ["tests/fixtures/superify/unity-social-simulation.md"]
+    },
+    {
+      "id": 10,
+      "prompt": "Compile and approve this package in a runtime where persistent goal tools are unavailable.",
+      "expected_output": "Persists the reviewed package as unsupported without consuming an activation attempt and never claims that a persistent goal exists.",
+      "files": ["tests/fixtures/superify/tiny-utility.md"]
+    },
+    {
+      "id": 11,
+      "prompt": "Resume after the process crashed with activation permission already consumed and the create-goal outcome unknown.",
+      "expected_output": "Runs a new goal preflight, never reuses the consumed attempt, reconciles a matching observed goal or requires fresh permission when none can be confirmed.",
+      "files": ["tests/fixtures/superify/unity-social-simulation.md"]
+    },
+    {
+      "id": 12,
+      "prompt": "Resume after the goal creation call returned a documented failure for the consumed attempt.",
+      "expected_output": "Keeps association null, retains the consumed attempt, stores only a bounded activation error, preflights again, and requires fresh exact permission for a new attempt.",
+      "files": ["tests/fixtures/superify/unity-social-simulation.md"]
+    },
+    {
+      "id": 13,
+      "prompt": "Resume the active state after plan projection failed on the previous owning-orchestrator turn.",
+      "expected_output": "Treats the artifact as authoritative, preserves the last projected revision, retries the exact current plan, and records synced projection only after documented success.",
+      "files": ["tests/fixtures/superify/unity-social-simulation.md"]
+    },
+    {
+      "id": 14,
+      "prompt": "Yes, open the optional read-only viewer for the active Superify state.",
+      "expected_output": "Starts the viewer with the exact state identity and no host override, reports only its loopback URL, and does not claim hosted access.",
+      "files": ["tests/fixtures/superify/unity-social-simulation.md"]
+    }
+  ]
+}

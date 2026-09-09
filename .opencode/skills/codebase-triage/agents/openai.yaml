@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codebase Triage"
+  short_description: "Study a repo and file prioritized GitHub issues"
+  default_prompt: "Use $codebase-triage to study this repository, de-dupe existing GitHub issues, and file a prioritized issue backlog."

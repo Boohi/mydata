@@ -1,0 +1,5 @@
+interface:
+  display_name: "Codebase Intelligence"
+  short_description: "Route opt-in structural analysis for JS and TS"
+  default_prompt: "Use $codebase-intelligence to choose the narrowest report-only codebase analysis path."
+

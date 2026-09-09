@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    "core",
+    "engineering"
+  ],
+  "include": [],
+  "exclude": [],
+  "detectStack": true
+}
