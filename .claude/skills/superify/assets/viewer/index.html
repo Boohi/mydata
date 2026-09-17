@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Superify · Local progress</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="ledger" aria-labelledby="viewer-title">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">Superify</p>
+          <h1 id="viewer-title">Progress ledger</h1>
+        </div>
+        <div class="masthead-status" aria-label="Viewer status">
+          <span class="chip"><span aria-hidden="true">⌂</span>&nbsp;Local</span>
+          <span class="chip"><span aria-hidden="true">◉</span>&nbsp;Read only</span>
+          <span id="refresh-status" class="chip" aria-live="polite"><span aria-hidden="true">○</span>&nbsp;<span data-essential data-status-label>Connecting</span></span>
+        </div>
+      </header>
+
+      <section class="panel goal-panel" data-superify-region="goal" aria-labelledby="goal-title">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">Active objective</p>
+            <h2 id="goal-title">Waiting for progress</h2>
+          </div>
+          <span id="goal-status" class="status" data-essential><span aria-hidden="true">○</span>&nbsp;<span data-essential data-status-label>Waiting</span></span>
+        </div>
+        <p id="goal-objective" class="goal-objective">Run /superify to compile a goal package.</p>
+        <div class="metric-strip" aria-label="Goal metrics">
+          <div><strong id="verified-metric" data-essential>—</strong><span>verified</span></div>
+          <div><strong id="percent-metric" data-essential>—</strong><span>derived</span></div>
+          <div><strong id="milestone-metric" data-essential>—</strong><span>milestones</span></div>
+        </div>
+        <progress id="goal-progress" max="100" value="0" aria-label="Verified goal progress"></progress>
+      </section>
+
+      <section class="panel journey-panel" data-superify-region="milestones" aria-labelledby="milestones-title">
+        <div class="section-heading compact-heading">
+          <div><p class="kicker">Outcome path</p><h2 id="milestones-title">Milestone journey</h2></div>
+          <span id="milestones-count" class="count-label" data-essential>0 visible</span>
+        </div>
+        <ol id="milestone-list" class="milestone-list"><li class="empty-row">No milestones yet</li></ol>
+      </section>
+
+      <section class="panel tasks-panel" data-superify-region="tasks" aria-labelledby="tasks-title">
+        <div class="section-heading compact-heading">
+          <div><p class="kicker">Now in motion</p><h2 id="tasks-title">Active milestone</h2></div>
+          <span id="tasks-count" class="count-label" data-essential>0 / 0</span>
+        </div>
+        <ol id="task-list" class="task-list"><li class="empty-row">No tasks yet</li></ol>
+      </section>
+
+      <div class="evidence-grid" aria-label="Evidence and plan condition">
+        <section class="panel evidence-panel" data-superify-region="proof" aria-labelledby="proof-title">
+          <div class="section-heading compact-heading"><h2 id="proof-title">Proof</h2><span id="proof-count" class="count-label">0</span></div>
+          <ul id="proof-list" class="evidence-list"><li class="empty-row">No proof yet</li></ul>
+          <div id="proof-links" class="proof-links" aria-label="Artifact links"></div>
+        </section>
+
+        <section class="panel evidence-panel" data-superify-region="activity" aria-labelledby="activity-title">
+          <div class="section-heading compact-heading"><h2 id="activity-title">Recent activity</h2><span id="activity-count" class="count-label">0</span></div>
+          <ol id="activity-list" class="evidence-list"><li class="empty-row">No activity yet</li></ol>
+        </section>
+
+        <section class="panel evidence-panel" data-superify-region="health" aria-labelledby="health-title">
+          <div class="section-heading compact-heading"><h2 id="health-title">Plan health</h2><span id="health-count" class="count-label">0</span></div>
+          <ul id="health-list" class="evidence-list"><li class="empty-row">No health data yet</li></ul>
+        </section>
+      </div>
+
+      <footer class="panel footer-panel" data-superify-region="footer">
+        <div class="focus-cell"><span>Current focus</span><strong id="focus-value" data-essential>Not started</strong></div>
+        <div><span>Tokens</span><strong id="tokens-value" data-essential>Not reported</strong></div>
+        <div><span>Elapsed</span><strong id="elapsed-value" data-essential>Not reported</strong></div>
+        <div><span>Freshness</span><time id="freshness-value" datetime="" data-essential>Waiting</time></div>
+      </footer>
+    </main>
+    <script type="module" src="/viewer.js"></script>
+  </body>
+</html>

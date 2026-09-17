@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Work Overview"
+  short_description: "See active Codex and Claude work"
+  default_prompt: "Use $agent-work-overview to summarize running agent sessions before choosing the next slice."

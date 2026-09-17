@@ -1,0 +1,744 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Decision-trace evals for canonical skills. Supply only prompt and referenced instructions to the model, never gold expectations or controls. Passing a trace is routing evidence, not runtime or delivery proof.",
+  "responseFormat": {
+    "skills": [
+      "canonical-skill-id"
+    ],
+    "actions": [
+      {
+        "id": "action-id",
+        "evidence": "Scenario-grounded reason or command; distinguish planned from observed"
+      }
+    ],
+    "questions": [],
+    "createsGoal": false,
+    "status": "continue | blocked | resume-reconciled"
+  },
+  "actionVocabulary": [
+    "accept-unrelated-failure",
+    "add-runtime-tests",
+    "auto-pick-next-slice",
+    "bulk-stage",
+    "check-doc-links",
+    "checkpoint-owned-files",
+    "classify-dirty-state",
+    "create-branch-pr",
+    "create-goal",
+    "create-parallel-glossary",
+    "declare-fixed-without-runtime",
+    "delete-active-worktree",
+    "duplicate-issue",
+    "execute-blocked-ticket",
+    "implement-slice",
+    "implement-speculative-fix",
+    "initialize-state",
+    "launch-replacement-owner",
+    "mark-ready-with-missing-spec",
+    "name-next-action",
+    "name-next-evidence",
+    "pin-review-base",
+    "preserve-active-worktree",
+    "preserve-association",
+    "preserve-dependencies",
+    "rank-hypotheses",
+    "read-bound-state",
+    "read-domain-docs",
+    "reconcile-owner-goal",
+    "reconcile-work",
+    "record-repro-attempts",
+    "repeat-tool-enforced-style",
+    "report-separate-axes",
+    "rerun-original-repro",
+    "reset-activation",
+    "review-spec",
+    "review-standards",
+    "rewrite-settled-decision",
+    "run-exact-repro",
+    "run-red-test",
+    "select-public-interface",
+    "select-unblocked-slice",
+    "state-acceptance",
+    "state-exact-blocker",
+    "stop-at-bound",
+    "update-existing-glossary",
+    "update-existing-handoff",
+    "verify-behavior"
+  ],
+  "scenarios": [
+    {
+      "id": "authorized-behavior-change",
+      "prompt": "Fix invoice retries for issue #42. Its existing branch and draft PR #43 are authoritative. The issue specifies retrying a timeout exactly once and preserving the successful response. Existing tests expose retryInvoice and use a fake clock. Scope and implementation authority are settled; proceed through this one slice. Do not ask me to pick testing seams.",
+      "contextFiles": [
+        "skills/next-slice/SKILL.md",
+        "skills/next-slice/references/slice-planning.md",
+        "skills/tdd-ops/SKILL.md",
+        "skills/tdd-ops/references/behavioral-testing.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "next-slice",
+          "tdd-ops"
+        ],
+        "forbiddenSkills": [
+          "superify",
+          "implement"
+        ],
+        "requiredActions": [
+          "reconcile-work",
+          "select-public-interface",
+          "run-red-test",
+          "implement-slice",
+          "verify-behavior"
+        ],
+        "forbiddenActions": [
+          "create-branch-pr",
+          "create-goal",
+          "bulk-stage"
+        ],
+        "before": [
+          [
+            "run-red-test",
+            "implement-slice"
+          ],
+          [
+            "implement-slice",
+            "verify-behavior"
+          ]
+        ],
+        "maxQuestions": 0,
+        "createsGoal": false,
+        "statuses": [
+          "continue"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "next-slice",
+          "tdd-ops"
+        ],
+        "actions": [
+          {
+            "id": "reconcile-work",
+            "evidence": "Reuse issue #42, its existing branch and draft PR #43 after reading live state."
+          },
+          {
+            "id": "select-public-interface",
+            "evidence": "Use retryInvoice and fake-clock tests already exercising retry behavior."
+          },
+          {
+            "id": "run-red-test",
+            "evidence": "Assert one timeout retry and an independent expected successful response; observe failure."
+          },
+          {
+            "id": "implement-slice",
+            "evidence": "Implement only the timeout retry fix for issue #42."
+          },
+          {
+            "id": "verify-behavior",
+            "evidence": "Run affected retry tests and the specified broader checks, including exhausted retry error."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "continue"
+      },
+      "negativeControls": [
+        {
+          "question": "Which seam should I test?",
+          "reason": "Already-discoverable test interface must not cause approval churn."
+        },
+        {
+          "addAction": "create-branch-pr",
+          "reason": "A new PR duplicates authoritative draft PR #43."
+        },
+        {
+          "reverseActions": true,
+          "reason": "A fix before the failing behavioral test violates the required loop."
+        }
+      ]
+    },
+    {
+      "id": "exact-symptom-diagnosis",
+      "prompt": "Debug the checkout where clicking Pay twice creates two orders. The app starts and the smoke test passes, but I can reproduce duplicate order IDs after two clicks. A browser harness can trigger two calls against the local test database. A TypeScript warning in an unrelated page also exists. Find and fix the duplicate-order cause in the authorized bug slice.",
+      "contextFiles": [
+        "skills/diagnosing-bugs/SKILL.md",
+        "skills/diagnosing-bugs/references/feedback-loop.md",
+        "skills/tdd-ops/SKILL.md",
+        "skills/tdd-ops/references/behavioral-testing.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "diagnosing-bugs",
+          "tdd-ops"
+        ],
+        "forbiddenSkills": [
+          "superify"
+        ],
+        "requiredActions": [
+          "run-exact-repro",
+          "rank-hypotheses",
+          "run-red-test",
+          "implement-slice",
+          "rerun-original-repro"
+        ],
+        "forbiddenActions": [
+          "accept-unrelated-failure",
+          "declare-fixed-without-runtime"
+        ],
+        "before": [
+          [
+            "run-exact-repro",
+            "rank-hypotheses"
+          ],
+          [
+            "run-red-test",
+            "implement-slice"
+          ],
+          [
+            "implement-slice",
+            "rerun-original-repro"
+          ]
+        ],
+        "maxQuestions": 0,
+        "createsGoal": false,
+        "statuses": [
+          "continue"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "diagnosing-bugs",
+          "tdd-ops"
+        ],
+        "actions": [
+          {
+            "id": "run-exact-repro",
+            "evidence": "Run the browser double-Pay harness and assert exactly one order; capture duplicate IDs."
+          },
+          {
+            "id": "rank-hypotheses",
+            "evidence": "Compare missing idempotency, event duplication, and concurrent request races using falsifiable probes."
+          },
+          {
+            "id": "run-red-test",
+            "evidence": "Capture the two-call duplicate-order scenario as a failing public-behavior regression."
+          },
+          {
+            "id": "implement-slice",
+            "evidence": "Apply the smallest fix supported by the duplicate-order reproduction."
+          },
+          {
+            "id": "rerun-original-repro",
+            "evidence": "Repeat the original double-click browser flow against the local test database."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "continue"
+      },
+      "negativeControls": [
+        {
+          "removeAction": "run-exact-repro",
+          "reason": "A successful smoke test does not reproduce duplicate orders."
+        },
+        {
+          "addAction": "accept-unrelated-failure",
+          "reason": "The unrelated TypeScript warning is not the user's bug."
+        },
+        {
+          "addAction": "declare-fixed-without-runtime",
+          "reason": "The browser promise needs the original browser reproduction rerun."
+        }
+      ]
+    },
+    {
+      "id": "domain-docs-preserve-conventions",
+      "prompt": "Update our domain glossary after this settled decision: Organization is the billing tenant and Member is a login identity. The repo already stores its glossary in docs/domain/glossary.md and decisions in docs/decisions. ADR 12 explains why organizations can share a billing account. This request changes terminology only; preserve that decision and the existing documentation layout.",
+      "contextFiles": [
+        "skills/docs-ops/SKILL.md",
+        "skills/docs-ops/references/domain-docs.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "docs-ops"
+        ],
+        "forbiddenSkills": [
+          "superify",
+          "tdd-ops"
+        ],
+        "requiredActions": [
+          "read-domain-docs",
+          "update-existing-glossary",
+          "check-doc-links"
+        ],
+        "forbiddenActions": [
+          "create-parallel-glossary",
+          "rewrite-settled-decision",
+          "add-runtime-tests"
+        ],
+        "before": [
+          [
+            "read-domain-docs",
+            "update-existing-glossary"
+          ]
+        ],
+        "maxQuestions": 0,
+        "createsGoal": false,
+        "statuses": [
+          "continue"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "docs-ops"
+        ],
+        "actions": [
+          {
+            "id": "read-domain-docs",
+            "evidence": "Read docs/domain/glossary.md and ADR 12 in docs/decisions before editing."
+          },
+          {
+            "id": "update-existing-glossary",
+            "evidence": "Record Organization and Member in the existing glossary while preserving billing-account semantics."
+          },
+          {
+            "id": "check-doc-links",
+            "evidence": "Check glossary/ADR links and formatting; runtime tests are unnecessary for terminology-only changes."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "continue"
+      },
+      "negativeControls": [
+        {
+          "addAction": "create-parallel-glossary",
+          "reason": "Creating CONTEXT.md in addition would split domain authority."
+        },
+        {
+          "addAction": "rewrite-settled-decision",
+          "reason": "Glossary editing does not authorize redesigning ADR 12."
+        },
+        {
+          "addSkill": "tdd-ops",
+          "reason": "Terminology-only edits should not trigger behavioral TDD."
+        }
+      ]
+    },
+    {
+      "id": "parallel-review-axes",
+      "prompt": "Review draft PR #43 against its issue #42 and the PR's actual base SHA. Repository standards pass. The specification asks for one retry after a timeout, but the current change retries indefinitely. I have authorized review and correction. Keep the review small and make sure passing style checks do not hide missing behavior.",
+      "contextFiles": [
+        "skills/next-slice/SKILL.md",
+        "skills/next-slice/references/review.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "next-slice"
+        ],
+        "forbiddenSkills": [
+          "superify"
+        ],
+        "requiredActions": [
+          "pin-review-base",
+          "review-standards",
+          "review-spec",
+          "report-separate-axes"
+        ],
+        "forbiddenActions": [
+          "mark-ready-with-missing-spec",
+          "repeat-tool-enforced-style"
+        ],
+        "before": [
+          [
+            "pin-review-base",
+            "review-standards"
+          ],
+          [
+            "pin-review-base",
+            "review-spec"
+          ],
+          [
+            "review-spec",
+            "report-separate-axes"
+          ]
+        ],
+        "maxQuestions": 0,
+        "createsGoal": false,
+        "statuses": [
+          "continue"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "next-slice"
+        ],
+        "actions": [
+          {
+            "id": "pin-review-base",
+            "evidence": "Resolve PR #43's actual base SHA and compare its current head against that baseline."
+          },
+          {
+            "id": "review-standards",
+            "evidence": "Delegate standards review independently; note passing documented standards without duplicating formatter checks."
+          },
+          {
+            "id": "review-spec",
+            "evidence": "Delegate issue #42 acceptance review independently; infinite retries violate the required single retry."
+          },
+          {
+            "id": "report-separate-axes",
+            "evidence": "Report standards pass and spec failure separately, with the timeout retry gap blocking readiness."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "continue"
+      },
+      "negativeControls": [
+        {
+          "removeAction": "review-spec",
+          "reason": "A standards-only review misses the requested behavior."
+        },
+        {
+          "addAction": "mark-ready-with-missing-spec",
+          "reason": "Passing standards cannot cancel a spec failure."
+        },
+        {
+          "question": "What should the comparison base be?",
+          "reason": "The PR's actual base SHA is already available."
+        }
+      ]
+    },
+    {
+      "id": "superify-same-state-resume",
+      "prompt": "/superify Resume the existing bound state and active owner goal. The state ID and documented goal association are supplied by this session; packageRevision=3 and planRevision=2 are unchanged. Previous receipts already show the association and synced projection. Read the current artifact and reconcile it. This is a same-state resume, not permission to initialize or activate another goal.",
+      "contextFiles": [
+        "skills/superify/SKILL.md",
+        "skills/superify/references/goal-contract.md",
+        "skills/superify/references/progress-contract.md",
+        "skills/superify/references/planning-discipline.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "superify"
+        ],
+        "forbiddenSkills": [
+          "implement"
+        ],
+        "requiredActions": [
+          "read-bound-state",
+          "reconcile-owner-goal",
+          "preserve-association"
+        ],
+        "forbiddenActions": [
+          "initialize-state",
+          "create-goal",
+          "reset-activation"
+        ],
+        "before": [
+          [
+            "read-bound-state",
+            "reconcile-owner-goal"
+          ],
+          [
+            "reconcile-owner-goal",
+            "preserve-association"
+          ]
+        ],
+        "maxQuestions": 0,
+        "createsGoal": false,
+        "statuses": [
+          "resume-reconciled"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "superify"
+        ],
+        "actions": [
+          {
+            "id": "read-bound-state",
+            "evidence": "Read only the session-supplied state identity and its current package/plan revisions."
+          },
+          {
+            "id": "reconcile-owner-goal",
+            "evidence": "Call get_goal and compare against the documented active association and existing receipts."
+          },
+          {
+            "id": "preserve-association",
+            "evidence": "Retain the existing identity and activation; project only if current readback proves it necessary."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "resume-reconciled"
+      },
+      "negativeControls": [
+        {
+          "createsGoal": true,
+          "reason": "An active association must never gain a second goal."
+        },
+        {
+          "addAction": "reset-activation",
+          "reason": "Resume must preserve active association rather than reset for approval."
+        },
+        {
+          "addAction": "initialize-state",
+          "reason": "Existing state must be read and reconciled, not reinitialized."
+        }
+      ]
+    },
+    {
+      "id": "bounded-vertical-tickets",
+      "prompt": "Plan the next slice for export recovery under existing epic #70. Issues #71 (cursor recovery) and #72 (bounded replay) and draft PR #73 already exist. Cursor recovery blocks replay. Implement one eligible slice, with a testable end-to-end outcome. More tickets might be useful later, but I have not authorized an unbounded backlog run.",
+      "contextFiles": [
+        "skills/next-slice/SKILL.md",
+        "skills/next-slice/references/slice-planning.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "next-slice"
+        ],
+        "forbiddenSkills": [
+          "superify",
+          "wayfinder",
+          "implement-spec"
+        ],
+        "requiredActions": [
+          "reconcile-work",
+          "select-unblocked-slice",
+          "state-acceptance",
+          "preserve-dependencies",
+          "stop-at-bound"
+        ],
+        "forbiddenActions": [
+          "duplicate-issue",
+          "execute-blocked-ticket",
+          "auto-pick-next-slice"
+        ],
+        "before": [
+          [
+            "reconcile-work",
+            "select-unblocked-slice"
+          ],
+          [
+            "select-unblocked-slice",
+            "state-acceptance"
+          ]
+        ],
+        "maxQuestions": 0,
+        "createsGoal": false,
+        "statuses": [
+          "continue"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "next-slice"
+        ],
+        "actions": [
+          {
+            "id": "reconcile-work",
+            "evidence": "Read epic #70, issues #71/#72, and draft PR #73 before selecting work."
+          },
+          {
+            "id": "select-unblocked-slice",
+            "evidence": "Choose cursor recovery #71 because bounded replay #72 depends on it."
+          },
+          {
+            "id": "state-acceptance",
+            "evidence": "Define a resumed export from the persisted cursor with observable output and failure recovery evidence."
+          },
+          {
+            "id": "preserve-dependencies",
+            "evidence": "Keep #72 blocked by #71 using current tracker relationships; preserve the existing issue lineage."
+          },
+          {
+            "id": "stop-at-bound",
+            "evidence": "Complete and checkpoint this single slice, then hand off remaining replay work without starting it."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "continue"
+      },
+      "negativeControls": [
+        {
+          "addAction": "duplicate-issue",
+          "reason": "Creating another cursor-recovery ticket duplicates #71."
+        },
+        {
+          "addAction": "execute-blocked-ticket",
+          "reason": "Replay depends on unfinished cursor recovery."
+        },
+        {
+          "addAction": "auto-pick-next-slice",
+          "reason": "The authorized run is bounded to one slice."
+        }
+      ]
+    },
+    {
+      "id": "runtime-reproduction-blocker",
+      "prompt": "Diagnose an iOS bug that only occurs on a physical device. This Linux host has no connected iOS device. Local checks confirm no remote Mac is reachable and no captured failing trace is available. Compilation succeeds, but it never exercises the reported sensor failure. Record what can be established now and the exact next step; do not claim a fix from compilation.",
+      "contextFiles": [
+        "skills/diagnosing-bugs/SKILL.md",
+        "skills/diagnosing-bugs/references/feedback-loop.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "diagnosing-bugs"
+        ],
+        "forbiddenSkills": [
+          "superify"
+        ],
+        "requiredActions": [
+          "record-repro-attempts",
+          "state-exact-blocker",
+          "name-next-evidence"
+        ],
+        "forbiddenActions": [
+          "implement-speculative-fix",
+          "declare-fixed-without-runtime",
+          "accept-unrelated-failure"
+        ],
+        "before": [
+          [
+            "record-repro-attempts",
+            "state-exact-blocker"
+          ]
+        ],
+        "maxQuestions": 1,
+        "createsGoal": false,
+        "statuses": [
+          "blocked"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "diagnosing-bugs"
+        ],
+        "actions": [
+          {
+            "id": "record-repro-attempts",
+            "evidence": "Record the confirmed device absence, unreachable Mac checks, and lack of a captured sensor trace."
+          },
+          {
+            "id": "state-exact-blocker",
+            "evidence": "Compilation cannot exercise the physical sensor failure; diagnosis remains blocked on the device path."
+          },
+          {
+            "id": "name-next-evidence",
+            "evidence": "Resume with access to a reproducing physical device or a redacted timestamped sensor trace and trigger steps."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "blocked"
+      },
+      "negativeControls": [
+        {
+          "status": "complete",
+          "reason": "A non-reproducing successful compilation cannot establish a fix."
+        },
+        {
+          "addAction": "implement-speculative-fix",
+          "reason": "No evidence isolates a cause in the sensor path."
+        },
+        {
+          "removeAction": "name-next-evidence",
+          "reason": "A blocker without the next required evidence cannot be resumed."
+        }
+      ]
+    },
+    {
+      "id": "handoff-with-protected-work",
+      "prompt": "Wrap up the verified fix on draft PR #43 for issue #42. The worktree also contains a colleague's unrelated uncommitted migration and a dev server still using this path. My fix has passed its targeted test and required CI. Preserve both active work and the current owner lineage; prepare a durable handoff so a new session can resume without this chat.",
+      "contextFiles": [
+        "skills/wrapup/SKILL.md",
+        "skills/wrapup/references/handoff.md"
+      ],
+      "expected": {
+        "requiredSkills": [
+          "wrapup"
+        ],
+        "forbiddenSkills": [
+          "claude-handoff",
+          "implement-spec"
+        ],
+        "requiredActions": [
+          "classify-dirty-state",
+          "checkpoint-owned-files",
+          "update-existing-handoff",
+          "preserve-active-worktree",
+          "name-next-action"
+        ],
+        "forbiddenActions": [
+          "bulk-stage",
+          "delete-active-worktree",
+          "launch-replacement-owner"
+        ],
+        "before": [
+          [
+            "classify-dirty-state",
+            "checkpoint-owned-files"
+          ],
+          [
+            "checkpoint-owned-files",
+            "update-existing-handoff"
+          ]
+        ],
+        "maxQuestions": 0,
+        "createsGoal": false,
+        "statuses": [
+          "continue"
+        ]
+      },
+      "positiveControl": {
+        "skills": [
+          "wrapup"
+        ],
+        "actions": [
+          {
+            "id": "classify-dirty-state",
+            "evidence": "Identify the fix files separately from the colleague's migration and record the live dev server."
+          },
+          {
+            "id": "checkpoint-owned-files",
+            "evidence": "Use the governed helper on the reviewed task-owned staged set, preserving unrelated migration edits."
+          },
+          {
+            "id": "update-existing-handoff",
+            "evidence": "Update PR #43 and issue #42 with exact verified SHA, checks, existing owner, and remaining local state."
+          },
+          {
+            "id": "preserve-active-worktree",
+            "evidence": "Keep this worktree because the colleague's dirty migration and dev server still need it."
+          },
+          {
+            "id": "name-next-action",
+            "evidence": "Link the existing PR and name the next authorized review action without spawning a replacement owner."
+          }
+        ],
+        "questions": [],
+        "createsGoal": false,
+        "status": "continue"
+      },
+      "negativeControls": [
+        {
+          "addAction": "bulk-stage",
+          "reason": "Bulk staging would absorb the colleague's migration."
+        },
+        {
+          "addAction": "delete-active-worktree",
+          "reason": "The dev server and uncommitted migration still depend on this worktree."
+        },
+        {
+          "addAction": "launch-replacement-owner",
+          "reason": "A handoff preserves existing lineage rather than duplicating its coordinator."
+        }
+      ]
+    }
+  ]
+}

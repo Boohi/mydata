@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "ownership": "project-owned finite runtime; outside shared portable receipt",
+  "source": {
+    "revision": "cbb71266e6dc1d242c4184cb0d656c06ac5290b5",
+    "packageVersion": "0.16.1",
+    "repository": "https://github.com/Boohi/shared-ai-config.git"
+  },
+  "files": [
+    {
+      "sourcePath": "hooks/docs-check.sh",
+      "projectPath": ".claude/hooks/docs-check.sh",
+      "sha256": "6ea9be9633c646e5eb102917ed5422863b8161df90cae86714c37bc0ddd8e9be",
+      "inheritedSha256": "6ea9be9633c646e5eb102917ed5422863b8161df90cae86714c37bc0ddd8e9be",
+      "mode": "0755",
+      "bytes": 1680,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/docs-list-context.sh",
+      "projectPath": ".claude/hooks/docs-list-context.sh",
+      "sha256": "a1e09ebd5a986bd6fbb8df91b15741fa3a579fc44e5b3721c1b653bacfb56ca8",
+      "inheritedSha256": "8922f44af7607dd3a627baa3eba5c181df16e1de171b93eaae1929f739cc7ac6",
+      "mode": "0755",
+      "bytes": 544,
+      "changed": true,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/git-commit-policy.sh",
+      "projectPath": ".claude/hooks/git-commit-policy.sh",
+      "sha256": "f5f99087613f4e9bd9660a5bafff905a7ba6171f83796d703500f4a591c047eb",
+      "inheritedSha256": "f5f99087613f4e9bd9660a5bafff905a7ba6171f83796d703500f4a591c047eb",
+      "mode": "0755",
+      "bytes": 1547,
+      "changed": false,
+      "inheritedMode": "0775"
+    },
+    {
+      "sourcePath": "hooks/mailbox-common.sh",
+      "projectPath": ".claude/hooks/mailbox-common.sh",
+      "sha256": "1264ada06d9d0703b9dae58d1fdb2433e0318b38cc2fbf17cca3266f5b6f04de",
+      "inheritedSha256": "1264ada06d9d0703b9dae58d1fdb2433e0318b38cc2fbf17cca3266f5b6f04de",
+      "mode": "0755",
+      "bytes": 2196,
+      "changed": false,
+      "inheritedMode": "0775"
+    },
+    {
+      "sourcePath": "hooks/mailbox-post-tool-use.sh",
+      "projectPath": ".claude/hooks/mailbox-post-tool-use.sh",
+      "sha256": "f39da94399552bf9050c20e7631a3bbebf537837b24bbd7bbb4e6ae5246f2686",
+      "inheritedSha256": "f39da94399552bf9050c20e7631a3bbebf537837b24bbd7bbb4e6ae5246f2686",
+      "mode": "0755",
+      "bytes": 897,
+      "changed": false,
+      "inheritedMode": "0775"
+    },
+    {
+      "sourcePath": "hooks/mailbox-pre-tool-use.sh",
+      "projectPath": ".claude/hooks/mailbox-pre-tool-use.sh",
+      "sha256": "bd7c8d9474afce0ca0cff691256324e07caf5794158a6ecc0bf9934ed04ccb34",
+      "inheritedSha256": "bd7c8d9474afce0ca0cff691256324e07caf5794158a6ecc0bf9934ed04ccb34",
+      "mode": "0755",
+      "bytes": 1408,
+      "changed": false,
+      "inheritedMode": "0775"
+    },
+    {
+      "sourcePath": "hooks/mailbox-session-start.sh",
+      "projectPath": ".claude/hooks/mailbox-session-start.sh",
+      "sha256": "1dc46778399b09793cce3f3a73e90371d15cf4a59065b372b1e1f4592f2be378",
+      "inheritedSha256": "1dc46778399b09793cce3f3a73e90371d15cf4a59065b372b1e1f4592f2be378",
+      "mode": "0755",
+      "bytes": 994,
+      "changed": false,
+      "inheritedMode": "0775"
+    },
+    {
+      "sourcePath": "hooks/mailbox-stop.sh",
+      "projectPath": ".claude/hooks/mailbox-stop.sh",
+      "sha256": "8305c9809254618e6471c322a04283efb004401c259394b3ed440115818535ae",
+      "inheritedSha256": "8305c9809254618e6471c322a04283efb004401c259394b3ed440115818535ae",
+      "mode": "0755",
+      "bytes": 668,
+      "changed": false,
+      "inheritedMode": "0775"
+    },
+    {
+      "sourcePath": "hooks/memory-context.sh",
+      "projectPath": ".claude/hooks/memory-context.sh",
+      "sha256": "5b185914a4a49002c8ec5f3bd753cece838f3b130a33cc67779d911246d605e6",
+      "inheritedSha256": "5b185914a4a49002c8ec5f3bd753cece838f3b130a33cc67779d911246d605e6",
+      "mode": "0755",
+      "bytes": 404,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/memory-post-tool.sh",
+      "projectPath": ".claude/hooks/memory-post-tool.sh",
+      "sha256": "a37a8711029664444c17c9e6519f4f8e8be8e99213367ec6a697d6c13bcb85ba",
+      "inheritedSha256": "a37a8711029664444c17c9e6519f4f8e8be8e99213367ec6a697d6c13bcb85ba",
+      "mode": "0755",
+      "bytes": 350,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/memory-stop.sh",
+      "projectPath": ".claude/hooks/memory-stop.sh",
+      "sha256": "8d2a9e3f945b43ff14a11d09bf6441eadcc9a515f3588ea71b6c5cead509cbdc",
+      "inheritedSha256": "8d2a9e3f945b43ff14a11d09bf6441eadcc9a515f3588ea71b6c5cead509cbdc",
+      "mode": "0755",
+      "bytes": 324,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/notify-telegram.sh",
+      "projectPath": ".claude/hooks/notify-telegram.sh",
+      "sha256": "3591679c7a150625b609c45f89e77875ed503756d0c2da88af4b705a545afa6b",
+      "inheritedSha256": "3591679c7a150625b609c45f89e77875ed503756d0c2da88af4b705a545afa6b",
+      "mode": "0755",
+      "bytes": 716,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/protect-files.sh",
+      "projectPath": ".claude/hooks/protect-files.sh",
+      "sha256": "4601d27f879b5c59244a3f63d855f7a12d0350ef7e4513df81ed40c99211d526",
+      "inheritedSha256": "4601d27f879b5c59244a3f63d855f7a12d0350ef7e4513df81ed40c99211d526",
+      "mode": "0755",
+      "bytes": 2059,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/require-read-before-edit.sh",
+      "projectPath": ".claude/hooks/require-read-before-edit.sh",
+      "sha256": "2b692f7350d2151de95262c05689e9f0b1939048d8d6b196b7d6e2acca57ef5c",
+      "inheritedSha256": "2b692f7350d2151de95262c05689e9f0b1939048d8d6b196b7d6e2acca57ef5c",
+      "mode": "0755",
+      "bytes": 3602,
+      "changed": false,
+      "inheritedMode": "0775"
+    },
+    {
+      "sourcePath": "hooks/team-task-completed-gate.sh",
+      "projectPath": ".claude/hooks/team-task-completed-gate.sh",
+      "sha256": "7d0b80961c614a43f34899ad3775860f574d9bef09842fc8d7016117cae66ab5",
+      "inheritedSha256": "7d0b80961c614a43f34899ad3775860f574d9bef09842fc8d7016117cae66ab5",
+      "mode": "0755",
+      "bytes": 2262,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/team-teammate-idle-gate.sh",
+      "projectPath": ".claude/hooks/team-teammate-idle-gate.sh",
+      "sha256": "420d372e21fd715d1049dc35755f401d4619ad44f2075ae04157ab47e082c862",
+      "inheritedSha256": "420d372e21fd715d1049dc35755f401d4619ad44f2075ae04157ab47e082c862",
+      "mode": "0755",
+      "bytes": 978,
+      "changed": false,
+      "inheritedMode": "0700"
+    },
+    {
+      "sourcePath": "hooks/type-check-validate.sh",
+      "projectPath": ".claude/hooks/type-check-validate.sh",
+      "sha256": "dc69540fb3ad59f7ea46756f4ed74a4629792085c86d4ae0f6eace1f68e1bb6d",
+      "inheritedSha256": "dc69540fb3ad59f7ea46756f4ed74a4629792085c86d4ae0f6eace1f68e1bb6d",
+      "mode": "0755",
+      "bytes": 3581,
+      "changed": false,
+      "inheritedMode": "0700"
+    }
+  ],
+  "portableDependencies": [
+    {
+      "path": ".ai-scripts/docs-list.sh",
+      "sha256": "0a371401dc49470ff8f258de35f9cda9e271f82497f27a5055cca247ad55a7f5",
+      "mode": "100755"
+    },
+    {
+      "path": ".ai-scripts/memory-capture.sh",
+      "sha256": "05c7a7f715745436eb881afc14a169cc736b891a04a9d4b394d6e7cb270a029d",
+      "mode": "100755"
+    },
+    {
+      "path": ".ai-scripts/memory-context.sh",
+      "sha256": "e455537922dbe7d50c56ef37543437409581569b45bb6864e6998e87b6fc4518",
+      "mode": "100755"
+    },
+    {
+      "path": ".ai-scripts/memory/engine.mjs",
+      "sha256": "ecd84375a2bfd680a8811371057eceff1d2cf9e18a540499da6a7a055b36b95c",
+      "mode": "100644"
+    }
+  ],
+  "reviewedDeltas": [
+    "hooks/docs-list-context.sh"
+  ],
+  "providerPolicy": "Existing optional mailbox/OpenCode/toolchain requirements remain separate; no provider installed or activated.",
+  "portableDependencyHistory": [
+    {
+      "source": {
+        "revision": "cbb71266e6dc1d242c4184cb0d656c06ac5290b5",
+        "packageVersion": "0.16.1",
+        "repository": "https://github.com/Boohi/shared-ai-config.git"
+      },
+      "portableDependencies": [
+        {
+          "path": ".ai-scripts/docs-list.sh",
+          "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+          "mode": "100755"
+        },
+        {
+          "path": ".ai-scripts/memory-capture.sh",
+          "sha256": "05c7a7f715745436eb881afc14a169cc736b891a04a9d4b394d6e7cb270a029d",
+          "mode": "100755"
+        },
+        {
+          "path": ".ai-scripts/memory-context.sh",
+          "sha256": "e455537922dbe7d50c56ef37543437409581569b45bb6864e6998e87b6fc4518",
+          "mode": "100755"
+        },
+        {
+          "path": ".ai-scripts/memory/engine.mjs",
+          "sha256": "ecd84375a2bfd680a8811371057eceff1d2cf9e18a540499da6a7a055b36b95c",
+          "mode": "100644"
+        }
+      ],
+      "provenanceSha256": "e307657fb322d4b981e6b4b8a452050e4334ae4f02cf07bf988772764feffc9e",
+      "provenanceGitBlob": "aa213af713cd1d06c872f284b26b2a6d0f19740a",
+      "projectRevision": "99df500715bd2a695905574aa07c122775c1585d"
+    }
+  ],
+  "portableDependencySource": {
+    "repository": "https://github.com/Boohi/shared-ai-config.git",
+    "revision": "4c6dda99c66315601860eddbabfcfed0b74f6c3a",
+    "packageVersion": "0.16.2"
+  }
+}

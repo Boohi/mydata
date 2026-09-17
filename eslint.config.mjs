@@ -11,6 +11,12 @@ export default [
       "**/target/**",
       "**/.build/**",
       "apps/ui/src-tauri/target/**",
+      // Portable shared source is authenticated by the context portability check.
+      "skills/**",
+      ".agents/skills/**",
+      ".claude/skills/**",
+      ".opencode/skills/**",
+      ".ai-scripts/**",
     ],
   },
   js.configs.recommended,
@@ -28,6 +34,17 @@ export default [
     files: ["**/*.{js,mjs,cjs}"],
     languageOptions: {
       globals: { ...globals.node },
+    },
+  },
+  // Preserve the inherited OpenCode adapter signatures; all other lint rules stay active.
+  {
+    files: [".opencode/plugins/continuous-memory.ts"],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
+  {
+    files: [".opencode/plugins/docs-check.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^(_|output$)" }],
     },
   },
 ];

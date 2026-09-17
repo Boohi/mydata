@@ -1,1 +1,29 @@
-/home/boohi/apps/shared-ai-config/.codex/config.toml
+# Shared Codex defaults for projects linked from shared-ai-config.
+# Keep this conservative and override per-project only when needed.
+
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+model_reasoning_effort = "high"
+
+# If AGENTS.md is absent in a nested folder, check these files in order.
+project_doc_fallback_filenames = ["AGENTS.md", "CLAUDE.md", "README.md"]
+
+# Allow network + pnpm-store writes inside workspace-write sandbox. Kills
+# per-call escalation churn (localhost operator, pnpm Corepack/store, gh/git
+# network) in trusted local repos. Override per-project only if a repo must be
+# air-gapped.
+[sandbox_workspace_write]
+network_access = true
+writable_roots = ["~/.local/share/pnpm"]
+
+[features]
+memories = true
+chronicle = true
+
+[memories]
+generate_memories = true
+use_memories = true
+
+# Prefer the selected repository skill origin.
+[plugins."shared-ai-config-suite@shared-ai-config"]
+enabled = false

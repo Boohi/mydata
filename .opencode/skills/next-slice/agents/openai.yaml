@@ -1,0 +1,4 @@
+interface:
+  display_name: "Next Slice"
+  short_description: "Pick and drive the next PR slice"
+  default_prompt: "Use $next-slice to inspect active agent work, choose the next issue, drive the next PR, and finish through $wrapup."

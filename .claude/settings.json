@@ -1,1 +1,168 @@
-/home/boohi/apps/shared-ai-config/.claude/settings.json
+{
+  "enabledPlugins": {
+    "shared-ai-config-suite@shared-ai-config": false
+  },
+  "extraKnownMarketplaces": {
+    "shared-ai-config": {
+      "source": {
+        "source": "github",
+        "repo": "Boohi/shared-ai-config",
+        "ref": "main"
+      }
+    }
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "teammateMode": "auto"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)", "Bash(pnpm:*)", "Bash(bun:*)", "Bash(yarn:*)", "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(agent-browser:*)",
+      "Bash(npx agent-browser:*)",
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
+      "Bash(git branch:*)", "Bash(git fetch:*)",
+      "Bash(git switch:*)",
+      "Bash(git merge:*)", "Bash(git rebase:*)",
+      "Bash(./skills/github-ops/scripts/commit-push.sh:*)",
+      "Bash(gh:*)",
+      "Bash(tsc:*)", "Bash(eslint:*)", "Bash(prettier:*)",
+      "Bash(jest:*)", "Bash(vitest:*)", "Bash(pytest:*)",
+      "Bash(cargo:*)", "Bash(go:*)", "Bash(make:*)",
+      "Bash(docker compose:*)", "Bash(docker build:*)", "Bash(docker run:*)",
+      "Bash(ls:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(mv:*)", "Bash(cat:*)", "Bash(find:*)", "Bash(rg:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch -f:*)",
+      "Bash(git switch --force:*)",
+      "Bash(git switch --discard-changes:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(docker system prune:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/docs-list-context.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/memory-context.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mailbox-session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/git-commit-policy.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/require-read-before-edit.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/docs-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mailbox-pre-tool-use.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/memory-post-tool.sh",
+            "async": true,
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mailbox-post-tool-use.sh",
+            "async": true,
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/type-check-validate.sh",
+            "async": true,
+            "timeout": 180
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/team-task-completed-gate.sh"
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/team-teammate-idle-gate.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/memory-stop.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mailbox-stop.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-telegram.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
