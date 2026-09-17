@@ -16,11 +16,11 @@ final class MigratorTests: XCTestCase {
         let migrator = Migrator(store: store)
 
         try migrator.migrate()
-        XCTAssertEqual(try store.metaGet("schema_version"), "1")
+        XCTAssertEqual(try store.metaGet("schema_version"), "2")
 
         // Idempotent: running again does not change version or fail.
         try migrator.migrate()
-        XCTAssertEqual(try store.metaGet("schema_version"), "1")
+        XCTAssertEqual(try store.metaGet("schema_version"), "2")
 
         // Schema exists: insert into apps and read it back via prepare+step.
         try store.runSQL(

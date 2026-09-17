@@ -11,7 +11,7 @@ import MydataIPC
 ///   * the periodic `flushInterval` tick (started by ``start()``)
 ///   * an explicit ``flush()`` call
 ///
-/// Only `flowStarted` and `flowEnded` are persisted in this slice. Other
+/// Flow and DNS query/response events are persisted. Other
 /// message kinds (`ping`, `pong`, `unknown`) are intentionally ignored.
 public actor Writer {
     private let store: Store
@@ -54,7 +54,7 @@ public actor Writer {
     /// batched; all other message kinds are silently dropped.
     public func append(_ msg: IPCMessage) {
         switch msg {
-        case .flowStarted, .flowEnded, .dnsQueried:
+        case .flowStarted, .flowEnded, .dnsQueried, .dnsResolved:
             pending.append(msg)
             if pending.count >= batchSize {
                 flushNow()
@@ -98,7 +98,7 @@ public actor Writer {
                 "UPDATE flows SET ended_ns = ?2 " +
                 "WHERE flow_id = ?1 AND ended_ns IS NULL;"
             )
-            let insertDNS = "INSERT INTO dns_queries (ts_ns, query_name, qtype) VALUES (?, ?, ?)"
+            let insertDNS = "INSERT INTO dns_queries (ts_ns, query_name, qtype, event_kind, resolved_ips, rcode) VALUES (?, ?, ?, ?, ?, ?)"
             let dnsStmt = try store.prepare(insertDNS)
             defer {
                 sqlite3_finalize(ins)
@@ -134,15 +134,27 @@ public actor Writer {
                         sqlite3_reset(ins)
                     }
 
-                case let .dnsQueried(p):
+                case .dnsQueried, .dnsResolved:
+                    let query: DNSQueryPayload
+                    let kind: String
+                    let addresses: [String]
+                    let rcode: UInt16?
+                    if case let .dnsQueried(p) = msg {
+                        query = p; kind = "query"; addresses = []; rcode = nil
+                    } else if case let .dnsResolved(p) = msg {
+                        query = p.query; kind = "response"; addresses = p.resolvedIPs; rcode = p.rcode
+                    } else { continue }
+                    let json = String(decoding: try JSONEncoder().encode(addresses), as: UTF8.self)
                     sqlite3_reset(dnsStmt)
-                    sqlite3_bind_int64(dnsStmt, 1, p.timestampNanos)
-                    _ = p.qname.withCString { sqlite3_bind_text(dnsStmt, 2, $0, -1, SQLITE_TRANSIENT) }
-                    sqlite3_bind_int(dnsStmt, 3, Int32(p.qtype))
+                    sqlite3_clear_bindings(dnsStmt)
+                    sqlite3_bind_int64(dnsStmt, 1, query.timestampNanos)
+                    _ = query.qname.withCString { sqlite3_bind_text(dnsStmt, 2, $0, -1, SQLITE_TRANSIENT) }
+                    sqlite3_bind_int(dnsStmt, 3, Int32(query.qtype))
+                    _ = kind.withCString { sqlite3_bind_text(dnsStmt, 4, $0, -1, SQLITE_TRANSIENT) }
+                    _ = json.withCString { sqlite3_bind_text(dnsStmt, 5, $0, -1, SQLITE_TRANSIENT) }
+                    if let rcode { sqlite3_bind_int(dnsStmt, 6, Int32(rcode)) }
                     let rc = sqlite3_step(dnsStmt)
-                    guard rc == SQLITE_DONE else {
-                        throw StoreError.step(rc, "insert dns_queries")
-                    }
+                    guard rc == SQLITE_DONE else { throw StoreError.step(rc, "insert dns event") }
 
                 default:
                     continue

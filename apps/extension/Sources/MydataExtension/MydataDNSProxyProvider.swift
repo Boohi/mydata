@@ -2,156 +2,289 @@ import Foundation
 import Network
 import NetworkExtension
 import MydataIPC
-import os.log
 
-/// Transparently proxies DNS queries while emitting a `.dnsQueried` IPC
-/// message per question. Always-on, never blocking, no caching. The actual
-/// resolution is delegated to the system resolver via NWConnection.
+/// Candidate original-flow relay. Installation remains gated by privacy policy
+/// reconciliation and signed macOS acceptance; this class initiates no idle traffic.
 @objc(MydataDNSProxyProvider)
 public final class MydataDNSProxyProvider: NEDNSProxyProvider {
-
-    private static let log = Logger(subsystem: "io.mydata.extension", category: "dnsproxy")
-
+    private let queue = DispatchQueue(label: "io.mydata.extension.dns-relay")
     private let ipcClient: IPCClient
+    private var sessions: [UUID: DNSNetworkSession] = [:]
+    private var pendingMetadata: [IPCMessage] = []
+    private var sendingMetadata = false
+    private var stopped = false
 
     public override init() {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let path = support.appendingPathComponent("mydata/daemon.sock").path
-        self.ipcClient = IPCClient(socketPath: path)
+        ipcClient = IPCClient(socketPath: support.appendingPathComponent("mydata/daemon.sock").path)
         super.init()
     }
 
-    public override func startProxy(options: [String : Any]? = nil, completionHandler: @escaping (Error?) -> Void) {
-        Self.log.info("mydata dns proxy starting")
+    public override func startProxy(options: [String: Any]? = nil, completionHandler: @escaping (Error?) -> Void) {
         completionHandler(nil)
     }
 
     public override func stopProxy(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
-        Self.log.info("mydata dns proxy stopping reason=\(reason.rawValue, privacy: .public)")
-        completionHandler()
+        queue.async {
+            self.stopped = true
+            for session in Array(self.sessions.values) { session.stop() }
+            self.sessions.removeAll()
+            self.pendingMetadata.removeAll()
+            Task { await self.ipcClient.stop() }
+            completionHandler()
+        }
     }
 
     public override func handleNewFlow(_ flow: NEAppProxyFlow) -> Bool {
-        if let udp = flow as? NEAppProxyUDPFlow {
-            handleUDP(udp)
-            return true
+        // Apple's false verdict discards a flow. It is not a pass-through verdict.
+        guard flow is NEAppProxyUDPFlow || flow is NEAppProxyTCPFlow else { return false }
+        queue.async {
+            guard !self.stopped else {
+                flow.closeReadWithError(nil); flow.closeWriteWithError(nil)
+                return
+            }
+            let id = UUID()
+            let emit: (IPCMessage) -> Void = { [weak self] in self?.enqueueMetadata($0) }
+            let finished: () -> Void = { [weak self] in self?.sessions.removeValue(forKey: id) }
+            let session: DNSNetworkSession
+            if let tcp = flow as? NEAppProxyTCPFlow {
+                session = DNSNetworkTCPTransport(flow: tcp, queue: self.queue, emit: emit, finished: finished)
+            } else if let udp = flow as? NEAppProxyUDPFlow {
+                session = DNSNetworkUDPSession(flow: udp, queue: self.queue, emit: emit, finished: finished)
+            } else { return }
+            self.sessions[id] = session
+            session.start()
         }
-        if let tcp = flow as? NEAppProxyTCPFlow {
-            handleTCP(tcp)
-            return true
-        }
-        return false
+        return true
     }
 
-    // MARK: UDP
+    /// One in-flight IPC operation and a finite queue; daemon outages cannot
+    /// create an unbounded number of Tasks or block the transport pumps.
+    private func enqueueMetadata(_ message: IPCMessage) {
+        guard !stopped, pendingMetadata.count < 256 else { return }
+        pendingMetadata.append(message)
+        drainMetadata()
+    }
 
-    private func handleUDP(_ flow: NEAppProxyUDPFlow) {
+    private func drainMetadata() {
+        guard !stopped, !sendingMetadata, !pendingMetadata.isEmpty else { return }
+        sendingMetadata = true
+        let message = pendingMetadata.removeFirst()
+        Task { [weak self, ipcClient] in
+            await ipcClient.send(message)
+            guard let self else { return }
+            self.queue.async {
+                self.sendingMetadata = false
+                self.drainMetadata()
+            }
+        }
+    }
+}
+
+protocol DNSNetworkSession: AnyObject {
+    func start()
+    func stop()
+}
+
+enum DNSUpstreamEndpoint {
+    /// A hostname here could trigger an extra resolver query. Accept only the
+    /// original numeric endpoint and its exact valid port, with no fallback.
+    static func parse(_ endpoint: NWHostEndpoint) -> Network.NWEndpoint? {
+        let host = Network.NWEndpoint.Host(endpoint.hostname)
+        switch host {
+        case .ipv4, .ipv6: break
+        default: return nil
+        }
+        guard let rawPort = UInt16(endpoint.port), rawPort > 0,
+              let port = Network.NWEndpoint.Port(rawValue: rawPort) else { return nil }
+        return .hostPort(host: host, port: port)
+    }
+    static var invalid: NSError { NSError(domain: "io.mydata.dns", code: 1) }
+    static var timedOut: NSError { NSError(domain: "io.mydata.dns", code: 2) }
+}
+
+/// Network adapter; the tested relay owns pump ordering and half-close behavior.
+private final class DNSNetworkTCPTransport: DNSTCPTransport, DNSNetworkSession {
+    private let flow: NEAppProxyTCPFlow
+    private let queue: DispatchQueue
+    private let emit: (IPCMessage) -> Void
+    private let finished: () -> Void
+    private var connection: NWConnection?
+    private var relay: DNSTCPRelay?
+    private var timer: DispatchSourceTimer?
+    private var cancelled = false
+    private var lastActivity = DispatchTime.now()
+
+    init(flow: NEAppProxyTCPFlow, queue: DispatchQueue, emit: @escaping (IPCMessage) -> Void, finished: @escaping () -> Void) {
+        self.flow = flow; self.queue = queue; self.emit = emit; self.finished = finished
+    }
+
+    func start() {
+        guard let host = flow.remoteEndpoint as? NWHostEndpoint,
+              let endpoint = DNSUpstreamEndpoint.parse(host) else { fail(DNSUpstreamEndpoint.invalid); return }
+        let connection = NWConnection(to: endpoint, using: .tcp)
+        self.connection = connection
+        relay = DNSTCPRelay(transport: self, emit: emit, activity: { [weak self] in self?.lastActivity = .now() })
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        self.timer = timer
+        timer.schedule(deadline: .now() + 30, repeating: 5)
+        timer.setEventHandler { [weak self] in
+            guard let self else { return }
+            if DispatchTime.now().uptimeNanoseconds - self.lastActivity.uptimeNanoseconds >= 30_000_000_000 {
+                self.fail(DNSUpstreamEndpoint.timedOut)
+            }
+        }
+        timer.resume()
         flow.open(withLocalEndpoint: nil) { [weak self] error in
             guard let self else { return }
-            if let error {
-                Self.log.error("udp open failed: \(error.localizedDescription, privacy: .public)")
-                flow.closeReadWithError(error)
-                flow.closeWriteWithError(error)
-                return
-            }
-            self.pumpUDP(flow)
-        }
-    }
-
-    private func pumpUDP(_ flow: NEAppProxyUDPFlow) {
-        flow.readDatagrams { [weak self] datagrams, endpoints, error in
-            guard let self, let datagrams, let endpoints, error == nil, !datagrams.isEmpty else {
-                flow.closeReadWithError(error)
-                flow.closeWriteWithError(error)
-                return
-            }
-            for (datagram, endpoint) in zip(datagrams, endpoints) {
-                self.emitDNSEvent(from: datagram)
-                guard let host = endpoint as? NWHostEndpoint else { continue }
-                let conn = NWConnection(
-                    host: Network.NWEndpoint.Host(host.hostname),
-                    port: Network.NWEndpoint.Port(host.port) ?? 53,
-                    using: .udp
-                )
-                conn.start(queue: .global())
-                conn.send(content: datagram, completion: .contentProcessed { _ in })
-                conn.receiveMessage { data, _, _, _ in
-                    if let data {
-                        flow.writeDatagrams([data], sentBy: [endpoint]) { _ in }
+            self.queue.async {
+                guard !self.cancelled else { return }
+                if let error { self.fail(error); return }
+                connection.stateUpdateHandler = { [weak self] state in
+                    guard let self, !self.cancelled else { return }
+                    switch state {
+                    case .ready: self.relay?.start()
+                    case .failed(let error): self.fail(error)
+                    default: break
                     }
-                    conn.cancel()
                 }
+                connection.start(queue: self.queue)
             }
-            self.pumpUDP(flow)
         }
     }
 
-    // MARK: TCP
+    func stop() { fail(nil) }
+    private func fail(_ error: Error?) {
+        if let relay { relay.stop(error) }
+        else if !cancelled { flow.closeReadWithError(error); flow.closeWriteWithError(error); cancel() }
+    }
+    func cancel() {
+        guard !cancelled else { return }
+        cancelled = true
+        timer?.cancel(); timer = nil
+        connection?.stateUpdateHandler = nil
+        connection?.cancel(); connection = nil
+        relay = nil
+        finished()
+    }
+    func readClient(_ completion: @escaping (Data?, Error?) -> Void) {
+        flow.readData { [weak self] data, error in self?.queue.async { completion(data, error) } }
+    }
+    func readUpstream(_ completion: @escaping (Data?, Bool, Error?) -> Void) {
+        connection?.receive(minimumIncompleteLength: 1, maximumLength: 16384) { data, _, complete, error in completion(data, complete, error) }
+    }
+    func writeUpstream(_ data: Data?, isComplete: Bool, completion: @escaping (Error?) -> Void) {
+        connection?.send(content: data, contentContext: isComplete ? .finalMessage : .defaultMessage, isComplete: isComplete, completion: .contentProcessed { completion($0) })
+    }
+    func writeClient(_ data: Data, completion: @escaping (Error?) -> Void) {
+        flow.write(data) { [weak self] error in self?.queue.async { completion(error) } }
+    }
+    func closeClientRead(_ error: Error?) { flow.closeReadWithError(error) }
+    func closeClientWrite(_ error: Error?) { flow.closeWriteWithError(error) }
+}
 
-    private func handleTCP(_ flow: NEAppProxyTCPFlow) {
+/// Up to 64 concurrent original datagram exchanges per flow. Stop reading while
+/// full; no additional application queue is accumulated across read batches.
+private final class DNSNetworkUDPSession: DNSNetworkSession {
+    private let flow: NEAppProxyUDPFlow
+    private let queue: DispatchQueue
+    private let emit: (IPCMessage) -> Void
+    private let finished: () -> Void
+    private var exchanges: [UUID: NWConnection] = [:]
+    private var batch: [(Data, NetworkExtension.NWEndpoint)] = []
+    private var index = 0
+    private var reading = false
+    private var cancelled = false
+    private var timer: DispatchSourceTimer?
+    private var lastActivity = DispatchTime.now()
+
+    init(flow: NEAppProxyUDPFlow, queue: DispatchQueue, emit: @escaping (IPCMessage) -> Void, finished: @escaping () -> Void) {
+        self.flow = flow; self.queue = queue; self.emit = emit; self.finished = finished
+    }
+    func start() {
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        self.timer = timer
+        timer.schedule(deadline: .now() + 30, repeating: 5)
+        timer.setEventHandler { [weak self] in
+            guard let self else { return }
+            if DispatchTime.now().uptimeNanoseconds - self.lastActivity.uptimeNanoseconds >= 30_000_000_000 { self.close(DNSUpstreamEndpoint.timedOut) }
+        }
+        timer.resume()
         flow.open(withLocalEndpoint: nil) { [weak self] error in
             guard let self else { return }
-            if let error {
-                Self.log.error("tcp open failed: \(error.localizedDescription, privacy: .public)")
-                flow.closeReadWithError(error)
-                flow.closeWriteWithError(error)
-                return
-            }
-            self.pumpTCP(flow)
+            self.queue.async { if let error { self.close(error) } else { self.pump() } }
         }
     }
-
-    private func pumpTCP(_ flow: NEAppProxyTCPFlow) {
-        flow.readData { [weak self] data, error in
-            guard let self, let data, !data.isEmpty, error == nil else {
-                flow.closeReadWithError(error)
-                flow.closeWriteWithError(error)
-                return
+    func stop() { close(nil) }
+    private func close(_ error: Error?) {
+        guard !cancelled else { return }
+        cancelled = true
+        for connection in exchanges.values { connection.stateUpdateHandler = nil; connection.cancel() }
+        exchanges.removeAll(); batch.removeAll()
+        timer?.cancel(); timer = nil
+        flow.closeReadWithError(error); flow.closeWriteWithError(error)
+        finished()
+    }
+    private func pump() {
+        guard !cancelled else { return }
+        while index < batch.count && exchanges.count < 64 {
+            let (data, endpoint) = batch[index]; index += 1
+            guard let host = endpoint as? NWHostEndpoint,
+                  let original = DNSUpstreamEndpoint.parse(host) else { close(DNSUpstreamEndpoint.invalid); return }
+            exchange(data, endpoint: endpoint, original: original)
+        }
+        guard index == batch.count, exchanges.count < 64, !reading else { return }
+        batch.removeAll(); index = 0; reading = true
+        flow.readDatagrams { [weak self] data, endpoints, error in
+            guard let self else { return }
+            self.queue.async {
+                self.reading = false
+                guard !self.cancelled else { return }
+                if let error { self.close(error); return }
+                guard let data, let endpoints, data.count == endpoints.count, !data.isEmpty else { self.close(nil); return }
+                self.lastActivity = .now()
+                self.batch = Array(zip(data, endpoints))
+                self.index = 0
+                self.pump()
             }
-            // TCP DNS: 2-byte length prefix, then the DNS message.
-            if data.count >= 2 {
-                let len = (Int(data[data.startIndex]) << 8) | Int(data[data.startIndex + 1])
-                if data.count >= 2 + len {
-                    self.emitDNSEvent(from: data.subdata(in: (data.startIndex + 2) ..< (data.startIndex + 2 + len)))
-                }
-            }
-            guard let host = (flow.remoteEndpoint as? NWHostEndpoint) else {
-                flow.closeReadWithError(nil)
-                flow.closeWriteWithError(nil)
-                return
-            }
-            let conn = NWConnection(
-                host: Network.NWEndpoint.Host(host.hostname),
-                port: Network.NWEndpoint.Port(host.port) ?? 53,
-                using: .tcp
-            )
-            conn.start(queue: .global())
-            conn.send(content: data, completion: .contentProcessed { [weak self] _ in
-                guard let self else {
-                    conn.cancel()
-                    return
-                }
-                conn.receive(minimumIncompleteLength: 1, maximumLength: 65535) { [weak self] resp, _, _, _ in
-                    if let resp { flow.write(resp) { _ in } }
-                    conn.cancel()
-                    self?.pumpTCP(flow)
-                }
-            })
         }
     }
-
-    // MARK: shared
-
-    private func emitDNSEvent(from datagram: Data) {
-        guard let question = try? DNSPacket.parseQuestion(datagram) else { return }
-        guard let payload = DNSQueryPayload(
-            timestampNanos: Int64(Date().timeIntervalSince1970 * 1_000_000_000),
-            qtype: question.qtype,
-            qname: question.qname
-        ) else { return }
-        Task { [ipcClient] in
-            await ipcClient.send(.dnsQueried(payload))
+    private func exchange(_ data: Data, endpoint: NetworkExtension.NWEndpoint, original: Network.NWEndpoint) {
+        let id = UUID()
+        let connection = NWConnection(to: original, using: .udp)
+        exchanges[id] = connection
+        var observer = DNSFlowObserver(maximumPending: 1)
+        if let query = observer.query(data, timestampNanos: Int64(Date().timeIntervalSince1970 * 1_000_000_000)) { emit(.dnsQueried(query)) }
+        connection.stateUpdateHandler = { [weak self] state in
+            if case .failed(let error) = state { self?.close(error) }
         }
-        Self.log.info("dns qname=\(question.qname, privacy: .public) qtype=\(question.qtype, privacy: .public)")
+        connection.start(queue: queue)
+        connection.send(content: data, completion: .contentProcessed { [weak self] error in
+            guard let self, !self.cancelled else { return }
+            if let error { self.close(error); return }
+            connection.receiveMessage { [weak self] response, _, _, error in
+                guard let self, !self.cancelled, self.exchanges[id] != nil else { return }
+                if let error { self.close(error); return }
+                guard let response else { self.close(DNSUpstreamEndpoint.invalid); return }
+                self.lastActivity = .now()
+                if let result = observer.response(response) { self.emit(.dnsResolved(result)) }
+                self.flow.writeDatagrams([response], sentBy: [endpoint]) { [weak self] error in
+                    guard let self else { return }
+                    self.queue.async {
+                        guard !self.cancelled else { return }
+                        if let error { self.close(error); return }
+                        connection.stateUpdateHandler = nil; connection.cancel()
+                        self.exchanges.removeValue(forKey: id)
+                        self.pump()
+                    }
+                }
+            }
+        })
+        queue.asyncAfter(deadline: .now() + 15) { [weak self, weak connection] in
+            guard let self, !self.cancelled, self.exchanges[id] != nil else { return }
+            connection?.stateUpdateHandler = nil; connection?.cancel()
+            self.exchanges.removeValue(forKey: id)
+            self.pump()
+        }
     }
 }

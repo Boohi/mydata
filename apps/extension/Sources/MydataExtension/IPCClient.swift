@@ -15,6 +15,7 @@ public actor IPCClient {
     private let socketPath: String
     private let backoffCap: Double
     private var connection: NWConnection?
+    private var stopped = false
     private var currentBackoff: Double = 0.1
     private let queue = DispatchQueue(label: "io.mydata.extension.ipc")
 
@@ -24,7 +25,7 @@ public actor IPCClient {
     }
 
     public func send(_ message: IPCMessage) async {
-        let conn = await ensureConnection()
+        guard let conn = await ensureConnection() else { return }
         let data = IPCCodec.encode(message)
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
             conn.send(content: data, completion: .contentProcessed { [weak self] error in
@@ -42,7 +43,14 @@ public actor IPCClient {
         return Swift.min(current * 2.0, cap)
     }
 
-    private func ensureConnection() async -> NWConnection {
+    public func stop() {
+        stopped = true
+        connection?.cancel()
+        connection = nil
+    }
+
+    private func ensureConnection() async -> NWConnection? {
+        guard !stopped, !Task.isCancelled else { return nil }
         if let conn = connection, conn.state == .ready { return conn }
         let conn = NWConnection(to: .unix(path: socketPath), using: .tcp)
         connection = conn

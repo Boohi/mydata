@@ -86,10 +86,31 @@ public struct DNSQueryPayload: Sendable, Equatable {
     public let qname: String  // ASCII/IDN-A presentation, max 253 bytes
 
     public init?(timestampNanos: Int64, qtype: UInt16, qname: String) {
-        guard qname.utf8.count <= 253 else { return nil }
+        guard qname.utf8.count <= 253,
+              qname.utf8.allSatisfy({ $0 >= 33 && $0 <= 126 && $0 != 92 && $0 != 34 }) else { return nil }
         self.timestampNanos = timestampNanos
         self.qtype = qtype
         self.qname = qname
+    }
+}
+
+/// Additive response event. The original query wire payload is unchanged.
+public struct DNSResolutionPayload: Sendable, Equatable {
+    public let query: DNSQueryPayload
+    public let rcode: UInt16
+    public let resolvedIPs: [String]
+
+    public init?(query: DNSQueryPayload, rcode: UInt16, resolvedIPs: [String]) {
+        guard rcode <= 4095, resolvedIPs.count <= 64 else { return nil }
+        for ip in resolvedIPs {
+            var bytes = [UInt8](repeating: 0, count: 16)
+            let family = ip.contains(":") ? AF_INET6 : AF_INET
+            guard ip.utf8.count <= 45,
+                  ip.withCString({ inet_pton(family, $0, &bytes) }) == 1 else { return nil }
+        }
+        self.query = query
+        self.rcode = rcode
+        self.resolvedIPs = resolvedIPs
     }
 }
 
@@ -97,6 +118,7 @@ public enum IPCMessage: Sendable, Equatable {
     case flowStarted(FlowEventPayload)
     case flowEnded(FlowEventPayload)
     case dnsQueried(DNSQueryPayload)
+    case dnsResolved(DNSResolutionPayload)
     case ping
     case pong
     /// Surfaced when the codec encounters an unknown type code so the receiver

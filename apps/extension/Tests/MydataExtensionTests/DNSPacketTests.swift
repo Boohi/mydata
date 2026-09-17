@@ -45,16 +45,15 @@ final class DNSPacketTests: XCTestCase {
         XCTAssertEqual(parsed.qname, "example.com")
     }
 
-    /// Microbenchmark — must average well under the 5ms AC budget.
-    func testPerformanceWellUnder5ms() {
+    /// Parser-only diagnostic. This is not end-to-end DNS resolution evidence.
+    func testParserPerformanceDiagnostic() {
         let data = Data(exampleA)
         measure {
             for _ in 0..<10_000 {
                 _ = try? DNSPacket.parseQuestion(data)
             }
         }
-        // XCTest's measure prints results; the AC is "median <5ms per query"
-        // and we do 10k parses per measure block, so we're comfortably orders
-        // of magnitude under budget if this completes at all.
+        // The under-5ms median resolution-overhead criterion requires a signed
+        // runtime comparison with and without the proxy; see issue #26.
     }
 }

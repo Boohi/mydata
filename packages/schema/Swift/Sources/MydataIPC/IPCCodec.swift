@@ -27,6 +27,7 @@ public enum IPCCodec {
         case .flowStarted(let p): return (0x01, encodeFlowPayload(p))
         case .flowEnded(let p):   return (0x02, encodeFlowPayload(p))
         case .dnsQueried(let p):  return (0x03, encodeDNSPayload(p))
+        case .dnsResolved(let p): return (0x04, encodeResolutionPayload(p))
         case .ping:               return (0x10, Data())
         case .pong:               return (0x11, Data())
         case .unknown(let t):     return (t, Data())
@@ -40,6 +41,20 @@ public enum IPCCodec {
         d.appendBE(p.qtype)
         d.appendBE(UInt16(nameBytes.count))
         d.append(contentsOf: nameBytes)
+        return d
+    }
+
+    private static func encodeResolutionPayload(_ p: DNSResolutionPayload) -> Data {
+        var d = encodeDNSPayload(p.query)
+        d.appendBE(p.rcode)
+        d.append(UInt8(p.resolvedIPs.count))
+        for ip in p.resolvedIPs {
+            let ipv6 = ip.contains(":")
+            var raw = [UInt8](repeating: 0, count: ipv6 ? 16 : 4)
+            _ = ip.withCString { inet_pton(ipv6 ? AF_INET6 : AF_INET, $0, &raw) }
+            d.append(ipv6 ? 6 : 4)
+            d.append(contentsOf: raw)
+        }
         return d
     }
 
@@ -79,6 +94,7 @@ public enum IPCCodec {
         case 0x01: message = .flowStarted(try decodeFlowPayload(payload))
         case 0x02: message = .flowEnded(try decodeFlowPayload(payload))
         case 0x03: message = .dnsQueried(try decodeDNSPayload(payload))
+        case 0x04: message = .dnsResolved(try decodeResolutionPayload(payload))
         case 0x10: message = .ping
         case 0x11: message = .pong
         default:   message = .unknown(type: type)
@@ -107,6 +123,37 @@ public enum IPCCodec {
             throw IPCDecodeError.malformedPayload("dns qname exceeds 253 bytes")
         }
         return payload
+    }
+
+    private static func decodeResolutionPayload(_ d: Data) throws -> DNSResolutionPayload {
+        guard d.count >= 15 else { throw IPCDecodeError.truncated }
+        let queryEnd = 12 + Int(d.readBE(at: 10, as: UInt16.self))
+        guard queryEnd + 3 <= d.count else { throw IPCDecodeError.truncated }
+        let query = try decodeDNSPayload(Data(d.prefix(queryEnd)))
+        let rcode = d.readBE(at: queryEnd, as: UInt16.self)
+        let count = Int(d[d.startIndex + queryEnd + 2])
+        guard count <= 64 else { throw IPCDecodeError.malformedPayload("too many DNS addresses") }
+        var cursor = d.startIndex + queryEnd + 3
+        var addresses: [String] = []
+        for _ in 0..<count {
+            guard cursor < d.endIndex else { throw IPCDecodeError.truncated }
+            let family = d[cursor]
+            guard family == 4 || family == 6 else { throw IPCDecodeError.malformedPayload("invalid DNS address family") }
+            let length = family == 4 ? 4 : 16
+            cursor += 1
+            guard cursor + length <= d.endIndex else { throw IPCDecodeError.truncated }
+            let raw = Array(d[cursor..<(cursor + length)])
+            var text = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
+            let result = raw.withUnsafeBytes { inet_ntop(family == 4 ? AF_INET : AF_INET6, $0.baseAddress, &text, socklen_t(INET6_ADDRSTRLEN)) }
+            guard result != nil else { throw IPCDecodeError.malformedPayload("invalid DNS address") }
+            addresses.append(String(cString: text))
+            cursor += length
+        }
+        guard cursor == d.endIndex,
+              let result = DNSResolutionPayload(query: query, rcode: rcode, resolvedIPs: addresses) else {
+            throw IPCDecodeError.malformedPayload("invalid DNS resolution payload")
+        }
+        return result
     }
 
     private static func decodeFlowPayload(_ d: Data) throws -> FlowEventPayload {
