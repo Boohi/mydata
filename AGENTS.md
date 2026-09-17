@@ -8,9 +8,12 @@ portable baseline; task-specific detail lives in on-demand skills and references
 - Read relevant local docs before substantial work. In this repo run
   `./.ai-scripts/docs-list.sh`. For `shared-ai-config`, use `npm` and verify with
   `npm run verify`.
-- Preserve user work. Use non-destructive Git operations and never edit
-  `.git`, installed dependency trees, generated build output, or real
-  environment files.
+- Preserve user work. Do not hand-edit Git internals, installed dependencies,
+  or generated output. Ordinary non-destructive Git commands and canonical
+  commit/push helpers are allowed within the authorized task. Package-manager
+  installs, builds, tests, and code generation may create or update disposable
+  output in the task checkout; these tool-managed writes alone need no separate
+  approval. Keep real environment files protected.
 - Get explicit approval before destructive, irreversible, production, or
   account-affecting actions unless the user already authorized that exact scope.
 - Never print, store, or commit secrets, tokens, mailbox content, or private

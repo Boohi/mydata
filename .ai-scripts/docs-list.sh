@@ -38,7 +38,7 @@ find "$DOCS_DIR" -name "*.md" -type f \
   ! -path "*/.git/*" \
   2>/dev/null | sort | while read -r file; do
 
-  rel_path="${file#$DOCS_DIR/}"
+  rel_path="${file#"$DOCS_DIR"/}"
   
   # Check if file has front-matter
   if ! head -1 "$file" | grep -q "^---"; then

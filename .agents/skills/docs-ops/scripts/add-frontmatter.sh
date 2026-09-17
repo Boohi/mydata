@@ -48,7 +48,7 @@ find "$DOCS_DIR" -name "*.md" -type f 2>/dev/null | while read -r file; do
     first_heading=$(basename "$file" .md | tr '_-' ' ')
   fi
   
-  rel_path="${file#$DOCS_DIR/}"
+  rel_path="${file#"$DOCS_DIR"/}"
   
   if [[ "$DRY_RUN" == "true" ]]; then
     echo "Would add to: $rel_path"

@@ -11,12 +11,24 @@ permissions:
 
 jobs:
   portable-context:
-    # Trusted pushes and same-repository PRs may use a unique custom runner label.
-    # Fork PRs always stay on GitHub-hosted Linux.
-    runs-on: ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && vars.BOOHI_AI_CONTEXT_RUNNER || 'ubuntu-latest' }}
+    # A configured runner accepts only owner pushes and owner same-repository
+    # PRs. Other events are skipped, without falling back to a hosted runner.
+    if: >-
+      vars.BOOHI_AI_CONTEXT_RUNNER == '' ||
+      (github.actor == github.repository_owner &&
+      (github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository)))
+    runs-on: ${{ vars.BOOHI_AI_CONTEXT_RUNNER || 'ubuntu-latest' }}
     steps:
       - name: Checkout project
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Setup verifier Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
       - name: Read shared-config revision
         id: shared
         run: |

@@ -181,7 +181,7 @@
   "portableDependencies": [
     {
       "path": ".ai-scripts/docs-list.sh",
-      "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+      "sha256": "0a371401dc49470ff8f258de35f9cda9e271f82497f27a5055cca247ad55a7f5",
       "mode": "100755"
     },
     {
@@ -203,5 +203,44 @@
   "reviewedDeltas": [
     "hooks/docs-list-context.sh"
   ],
-  "providerPolicy": "Existing optional mailbox/OpenCode/toolchain requirements remain separate; no provider installed or activated."
+  "providerPolicy": "Existing optional mailbox/OpenCode/toolchain requirements remain separate; no provider installed or activated.",
+  "portableDependencyHistory": [
+    {
+      "source": {
+        "revision": "cbb71266e6dc1d242c4184cb0d656c06ac5290b5",
+        "packageVersion": "0.16.1",
+        "repository": "https://github.com/Boohi/shared-ai-config.git"
+      },
+      "portableDependencies": [
+        {
+          "path": ".ai-scripts/docs-list.sh",
+          "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+          "mode": "100755"
+        },
+        {
+          "path": ".ai-scripts/memory-capture.sh",
+          "sha256": "05c7a7f715745436eb881afc14a169cc736b891a04a9d4b394d6e7cb270a029d",
+          "mode": "100755"
+        },
+        {
+          "path": ".ai-scripts/memory-context.sh",
+          "sha256": "e455537922dbe7d50c56ef37543437409581569b45bb6864e6998e87b6fc4518",
+          "mode": "100755"
+        },
+        {
+          "path": ".ai-scripts/memory/engine.mjs",
+          "sha256": "ecd84375a2bfd680a8811371057eceff1d2cf9e18a540499da6a7a055b36b95c",
+          "mode": "100644"
+        }
+      ],
+      "provenanceSha256": "e307657fb322d4b981e6b4b8a452050e4334ae4f02cf07bf988772764feffc9e",
+      "provenanceGitBlob": "aa213af713cd1d06c872f284b26b2a6d0f19740a",
+      "projectRevision": "99df500715bd2a695905574aa07c122775c1585d"
+    }
+  ],
+  "portableDependencySource": {
+    "repository": "https://github.com/Boohi/shared-ai-config.git",
+    "revision": "4c6dda99c66315601860eddbabfcfed0b74f6c3a",
+    "packageVersion": "0.16.2"
+  }
 }

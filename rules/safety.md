@@ -5,8 +5,12 @@ privacy-sensitive actions.
 
 ## Protect data and user work
 
-- Never edit `.git`, installed dependencies, or generated build/test output
-  directly. Change sources and regenerate through canonical commands.
+- Do not hand-edit Git internals, installed dependencies, or generated output.
+  Change sources and regenerate through canonical commands. Ordinary
+  non-destructive Git commands and canonical commit/push helpers are allowed
+  within the authorized task. Package-manager installs, builds, tests, and code
+  generation may create or update disposable output in the task checkout;
+  these tool-managed writes alone need no separate approval.
 - Treat `.env`, credentials, tokens, mailbox content, auth state, and private
   personal data as sensitive. Read or modify them only when directly required
   and authorized; never print, store in prompts, or commit them.

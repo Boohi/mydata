@@ -3,12 +3,12 @@
   "profile": "portable",
   "source": {
     "repository": "https://github.com/Boohi/shared-ai-config.git",
-    "revision": "cbb71266e6dc1d242c4184cb0d656c06ac5290b5",
-    "packageVersion": "0.16.1",
-    "skillContentDigest": "c72933ead3de6e46a6948e3a2e4e77a693d76bb0e8c65c43c57843baa257e35f"
+    "revision": "4c6dda99c66315601860eddbabfcfed0b74f6c3a",
+    "packageVersion": "0.16.2",
+    "skillContentDigest": "ab89012346d9cbf54799940a19af1b36bd515d1fd553e39108d49ab91d7e85b3"
   },
   "projection": {
-    "digest": "93c618fab84bde4607c32823775d51022d63b525b0c952d24652ff439a4df1fe",
+    "digest": "db848f1c97959b09cd8a20d39343c5de7949c44a991666e6374bd6cf8d60898d",
     "files": [
       {
         "path": ".agents/skills/agent-work-overview/SKILL.md",
@@ -137,12 +137,12 @@
       },
       {
         "path": ".agents/skills/docs-ops/scripts/add-frontmatter.sh",
-        "sha256": "12f80e464094b13c444d91f90bbb5564684fe0ac8817b1963ee0c1a2148cbf6f",
+        "sha256": "3e8a84a5dfd61997bcb1a4b3b97a8f89507f315cf9cfcb60ef3fcb909cda8b7f",
         "mode": "100755"
       },
       {
         "path": ".agents/skills/docs-ops/scripts/docs-list.sh",
-        "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+        "sha256": "0a371401dc49470ff8f258de35f9cda9e271f82497f27a5055cca247ad55a7f5",
         "mode": "100755"
       },
       {
@@ -157,7 +157,7 @@
       },
       {
         "path": ".agents/skills/github-ops/scripts/commit-push.sh",
-        "sha256": "0a3636b257595e092ce7d8e05da3eaf0ecdf7816ae35eba3fcfd004503096bda",
+        "sha256": "6dc3f4551fe98b57870ba26698f2c01bb6b72d25c937d4631286169944a18eff",
         "mode": "100755"
       },
       {
@@ -337,7 +337,7 @@
       },
       {
         "path": ".ai-scripts/docs-list.sh",
-        "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+        "sha256": "0a371401dc49470ff8f258de35f9cda9e271f82497f27a5055cca247ad55a7f5",
         "mode": "100755"
       },
       {
@@ -557,12 +557,12 @@
       },
       {
         "path": ".claude/skills/docs-ops/scripts/add-frontmatter.sh",
-        "sha256": "12f80e464094b13c444d91f90bbb5564684fe0ac8817b1963ee0c1a2148cbf6f",
+        "sha256": "3e8a84a5dfd61997bcb1a4b3b97a8f89507f315cf9cfcb60ef3fcb909cda8b7f",
         "mode": "100755"
       },
       {
         "path": ".claude/skills/docs-ops/scripts/docs-list.sh",
-        "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+        "sha256": "0a371401dc49470ff8f258de35f9cda9e271f82497f27a5055cca247ad55a7f5",
         "mode": "100755"
       },
       {
@@ -577,7 +577,7 @@
       },
       {
         "path": ".claude/skills/github-ops/scripts/commit-push.sh",
-        "sha256": "0a3636b257595e092ce7d8e05da3eaf0ecdf7816ae35eba3fcfd004503096bda",
+        "sha256": "6dc3f4551fe98b57870ba26698f2c01bb6b72d25c937d4631286169944a18eff",
         "mode": "100755"
       },
       {
@@ -982,12 +982,12 @@
       },
       {
         "path": ".opencode/skills/docs-ops/scripts/add-frontmatter.sh",
-        "sha256": "12f80e464094b13c444d91f90bbb5564684fe0ac8817b1963ee0c1a2148cbf6f",
+        "sha256": "3e8a84a5dfd61997bcb1a4b3b97a8f89507f315cf9cfcb60ef3fcb909cda8b7f",
         "mode": "100755"
       },
       {
         "path": ".opencode/skills/docs-ops/scripts/docs-list.sh",
-        "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+        "sha256": "0a371401dc49470ff8f258de35f9cda9e271f82497f27a5055cca247ad55a7f5",
         "mode": "100755"
       },
       {
@@ -1002,7 +1002,7 @@
       },
       {
         "path": ".opencode/skills/github-ops/scripts/commit-push.sh",
-        "sha256": "0a3636b257595e092ce7d8e05da3eaf0ecdf7816ae35eba3fcfd004503096bda",
+        "sha256": "6dc3f4551fe98b57870ba26698f2c01bb6b72d25c937d4631286169944a18eff",
         "mode": "100755"
       },
       {
@@ -1182,7 +1182,7 @@
       },
       {
         "path": "AGENTS.md",
-        "sha256": "4505a773b03c1492b1ca88f5c8c71096848941998d9ab13e1bbfefa37827ef52",
+        "sha256": "820c997fc8fcf9e535eb220759e4d04a8edc1153b877e227f29e8ffb814454e5",
         "mode": "100644"
       },
       {
@@ -1242,7 +1242,7 @@
       },
       {
         "path": "rules/safety.md",
-        "sha256": "119a7fc3f4b2d988bc3d2c6dc22ae08cc2970bb375f5eb2fa69cb1e3fe25c9eb",
+        "sha256": "9b187ed408cc7214fb12f02c24e1434046f9f74f86e23e9ffbb2c3e65284315b",
         "mode": "100644"
       },
       {
@@ -1392,12 +1392,12 @@
       },
       {
         "path": "skills/docs-ops/scripts/add-frontmatter.sh",
-        "sha256": "12f80e464094b13c444d91f90bbb5564684fe0ac8817b1963ee0c1a2148cbf6f",
+        "sha256": "3e8a84a5dfd61997bcb1a4b3b97a8f89507f315cf9cfcb60ef3fcb909cda8b7f",
         "mode": "100755"
       },
       {
         "path": "skills/docs-ops/scripts/docs-list.sh",
-        "sha256": "62027ff8d578294c423d285167465d3efe27d7fb5cc38895ac374b2b617edc37",
+        "sha256": "0a371401dc49470ff8f258de35f9cda9e271f82497f27a5055cca247ad55a7f5",
         "mode": "100755"
       },
       {
@@ -1412,7 +1412,7 @@
       },
       {
         "path": "skills/github-ops/scripts/commit-push.sh",
-        "sha256": "0a3636b257595e092ce7d8e05da3eaf0ecdf7816ae35eba3fcfd004503096bda",
+        "sha256": "6dc3f4551fe98b57870ba26698f2c01bb6b72d25c937d4631286169944a18eff",
         "mode": "100755"
       },
       {

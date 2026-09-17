@@ -218,7 +218,8 @@ update_changelog() {
   local entries=("$@")
 
   local changelog="CHANGELOG.md"
-  local date=$(date +%Y-%m-%d)
+  local date
+  date=$(date +%Y-%m-%d)
 
   # Build entries text
   local entries_text=""
@@ -371,7 +372,7 @@ git push origin "$BRANCH"
 
 echo ""
 echo "✓ Committed and pushed to $BRANCH"
-if [[ "$NO_VERSION" == "false" && ! supports_changelog_fragments ]]; then
+if [[ "$NO_VERSION" == "false" ]] && ! supports_changelog_fragments; then
   echo "✓ Released v$NEW_VERSION"
 elif [[ "$NO_VERSION" == "false" ]]; then
   echo "✓ Added changelog fragment(s)"

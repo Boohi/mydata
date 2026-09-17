@@ -47,3 +47,4 @@ docs/superpowers/
 /.opencode/plugins/provenance.json
 /AGENTS.md
 /CLAUDE.md
+/.github/workflows/ai-context-portability.yml
