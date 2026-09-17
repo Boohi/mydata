@@ -46,7 +46,7 @@ jobs:
                 fail=1
               fi
             done < <(echo "$stripped" | grep -oE '\]\([^)]+\)' | sed 's/^](\(.*\))/\1/')
-          done < <(find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -print0)
+          done < <(find . -type f -name '*.md' -not -path './node_modules/*' -not -path './.git/*' -print0)
           exit $fail
 
   node:
@@ -77,6 +77,23 @@ jobs:
         run: swift test --package-path apps/daemon
       - name: Check migrations mirror
         run: bash tests/check-migrations-mirror.sh
+
+  native-e2e:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Run synthetic native e2e smoke
+        run: npm run test:e2e:native -- --report test-results/e2e/native-smoke.json
+      - name: Upload native e2e report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-e2e-report
+          path: test-results/e2e/native-smoke.json
+          if-no-files-found: error
 
   privacy-paranoia:
     runs-on: ubuntu-latest

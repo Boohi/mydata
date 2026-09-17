@@ -5,6 +5,7 @@ build/
 .next/
 target/
 *.log
+test-results/
 .env
 .env.local
 .tauri/

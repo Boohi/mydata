@@ -22,6 +22,14 @@ LuLu and Little Snitch are excellent firewalls but answer per-flow questions ("a
 
 See [docs/build.md](docs/build.md).
 
+## Checks
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+- `npm run test:e2e`
+- `npm run test:privacy`
+
 ## Roadmap
 
 See [GitHub Issues](https://github.com/Boohi/mydata/issues) and the [v0.1 milestone](https://github.com/Boohi/mydata/milestone/1).
