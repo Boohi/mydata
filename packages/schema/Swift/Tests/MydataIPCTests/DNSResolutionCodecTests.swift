@@ -6,7 +6,8 @@ final class DNSResolutionCodecTests: XCTestCase {
         let query = DNSQueryPayload(timestampNanos: 42, qtype: 1, qname: "example.com")!
         let legacy = IPCCodec.encode(.dnsQueried(query))
         XCTAssertEqual(legacy[6], 0x03)
-        XCTAssertEqual(legacy.count, 7 + 12 + 11)
+        XCTAssertEqual(legacy, Data([0, 0, 0, 26, 0, 1, 3,
+                                    0, 0, 0, 0, 0, 0, 0, 42, 0, 1, 0, 11] + Array("example.com".utf8)))
         let result = DNSResolutionPayload(query: query, rcode: 0, resolvedIPs: ["192.0.2.8", "2001:db8::1"])!
         let frame = IPCCodec.encode(.dnsResolved(result))
         XCTAssertEqual(frame[6], 0x04)
@@ -35,4 +36,20 @@ final class DNSResolutionCodecTests: XCTestCase {
         trailer.replaceSubrange(0..<4, with: [UInt8(length >> 24), UInt8((length >> 16) & 255), UInt8((length >> 8) & 255), UInt8(length & 255)])
         XCTAssertThrowsError(try IPCCodec.decode(trailer))
     }
+    func testRejectsEmbeddedNULInAddressBeforeCStringConversion() {
+        let query = DNSQueryPayload(timestampNanos: 1, qtype: 1, qname: "a")!
+        XCTAssertNil(DNSResolutionPayload(query: query, rcode: 0, resolvedIPs: ["192.0.2.1\0garbage"]))
+        XCTAssertNil(DNSResolutionPayload(query: query, rcode: 0, resolvedIPs: ["2001:db8::1\0garbage"]))
+    }
+
+    func testUnknownFrameCanBeSkippedBeforeLegacyQuery() throws {
+        let query = DNSQueryPayload(timestampNanos: 42, qtype: 1, qname: "example.com")!
+        var unknown = IPCCodec.encode(.dnsResolved(DNSResolutionPayload(query: query, rcode: 0, resolvedIPs: [])!))
+        unknown[6] = 0x7f
+        let stream = unknown + IPCCodec.encode(.dnsQueried(query))
+        let (first, consumed) = try IPCCodec.decode(stream)
+        XCTAssertEqual(first, .unknown(type: 0x7f))
+        XCTAssertEqual(try IPCCodec.decode(Data(stream.dropFirst(consumed))).0, .dnsQueried(query))
+    }
+
 }

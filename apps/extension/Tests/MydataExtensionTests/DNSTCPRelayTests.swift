@@ -12,12 +12,14 @@ final class DNSTCPRelayTests: XCTestCase {
         var closedReads = 0
         var closedWrites = 0
         var sendError: Error?
+        var deferFinal = false
+        var pendingFinal: ((Error?) -> Void)?
         func readClient(_ completion: @escaping (Data?, Error?) -> Void) { clientReads.append(completion) }
         func readUpstream(_ completion: @escaping (Data?, Bool, Error?) -> Void) { upstreamReads.append(completion) }
         func writeUpstream(_ data: Data?, isComplete: Bool, completion: @escaping (Error?) -> Void) {
             if let data { sent.append(data) }
             if isComplete { finalWrites += 1 }
-            completion(sendError)
+            if isComplete && deferFinal { pendingFinal = completion } else { completion(sendError) }
         }
         func writeClient(_ data: Data, completion: @escaping (Error?) -> Void) { delivered.append(data); completion(nil) }
         func closeClientRead(_ error: Error?) { closedReads += 1 }
@@ -64,4 +66,17 @@ final class DNSTCPRelayTests: XCTestCase {
         XCTAssertEqual(transport.closedWrites, 1)
         XCTAssertEqual(transport.delivered, [])
     }
+    func testUpstreamEOFCannotCancelUnfinishedClientHalfClose() {
+        let transport = Transport()
+        transport.deferFinal = true
+        let relay = DNSTCPRelay(transport: transport)
+        relay.start()
+        transport.clientReads.removeFirst()(Data(), nil)
+        transport.upstreamReads.removeFirst()(Data([7]), true, nil)
+        XCTAssertEqual(transport.cancellations, 0)
+        transport.pendingFinal?(nil)
+        XCTAssertEqual(transport.cancellations, 1)
+        XCTAssertEqual(transport.delivered, [Data([7])])
+    }
+
 }
