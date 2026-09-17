@@ -88,6 +88,29 @@ final class WriterTests: XCTestCase {
         XCTAssertEqual(sqlite3_step(stmt), SQLITE_DONE)
     }
 
+    func testResolutionPersistsSeparateTypedEventAndIPs() async throws {
+        let (store, path) = try makeStore()
+        defer { store.close(); cleanup(path) }
+        let writer = Writer(store: store, batchSize: 1)
+        let query = DNSQueryPayload(timestampNanos: 10, qtype: 1, qname: "example.com")!
+        let resolution = DNSResolutionPayload(query: query, rcode: 0, resolvedIPs: ["192.0.2.8", "2001:db8::1"])!
+        await writer.append(.dnsQueried(query))
+        await writer.append(.dnsResolved(resolution))
+        await writer.flush()
+        let stmt = try store.prepare("SELECT event_kind, resolved_ips, rcode FROM dns_queries ORDER BY id")
+        defer { sqlite3_finalize(stmt) }
+        XCTAssertEqual(sqlite3_step(stmt), SQLITE_ROW)
+        XCTAssertEqual(String(cString: sqlite3_column_text(stmt, 0)), "query")
+        XCTAssertEqual(String(cString: sqlite3_column_text(stmt, 1)), "[]")
+        XCTAssertEqual(sqlite3_step(stmt), SQLITE_ROW)
+        XCTAssertEqual(String(cString: sqlite3_column_text(stmt, 0)), "response")
+        let json = Data(String(cString: sqlite3_column_text(stmt, 1)).utf8)
+        XCTAssertEqual(try JSONDecoder().decode([String].self, from: json), ["192.0.2.8", "2001:db8::1"])
+        XCTAssertEqual(sqlite3_column_int(stmt, 2), 0)
+        XCTAssertEqual(sqlite3_step(stmt), SQLITE_DONE)
+        XCTAssertTrue(MessagePrinter.line(for: .dnsResolved(resolution)).contains("resolved_ips=192.0.2.8,2001:db8::1"))
+    }
+
     func test_batch_flushesAt10Events() async throws {
         let (store, path) = try makeStore()
         defer { store.close(); cleanup(path) }
