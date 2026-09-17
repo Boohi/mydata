@@ -191,7 +191,7 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
     private let emit: (IPCMessage) -> Void
     private let finished: () -> Void
     private var exchanges: [UUID: NWConnection] = [:]
-    private var batch: [(Data, NetworkExtension.NWEndpoint)] = []
+    private var batch: [(Data, NWHostEndpoint)] = []
     private var index = 0
     private var reading = false
     private var cancelled = false
@@ -229,8 +229,7 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
         guard !cancelled else { return }
         while index < batch.count && exchanges.count < 64 {
             let (data, endpoint) = batch[index]; index += 1
-            guard let host = endpoint as? NWHostEndpoint,
-                  let original = DNSUpstreamEndpoint.parse(host) else { close(DNSUpstreamEndpoint.invalid); return }
+            guard let original = DNSUpstreamEndpoint.parse(endpoint) else { close(DNSUpstreamEndpoint.invalid); return }
             exchange(data, endpoint: endpoint, original: original)
         }
         guard index == batch.count, exchanges.count < 64, !reading else { return }
@@ -243,13 +242,18 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
                 if let error { self.close(error); return }
                 guard let data, let endpoints, data.count == endpoints.count, !data.isEmpty else { self.close(nil); return }
                 self.lastActivity = .now()
-                self.batch = Array(zip(data, endpoints))
+                var incoming: [(Data, NWHostEndpoint)] = []
+                for (packet, endpoint) in zip(data, endpoints) {
+                    guard let host = endpoint as? NWHostEndpoint else { self.close(DNSUpstreamEndpoint.invalid); return }
+                    incoming.append((packet, host))
+                }
+                self.batch = incoming
                 self.index = 0
                 self.pump()
             }
         }
     }
-    private func exchange(_ data: Data, endpoint: NetworkExtension.NWEndpoint, original: Network.NWEndpoint) {
+    private func exchange(_ data: Data, endpoint: NWHostEndpoint, original: Network.NWEndpoint) {
         let id = UUID()
         let connection = NWConnection(to: original, using: .udp)
         exchanges[id] = connection
