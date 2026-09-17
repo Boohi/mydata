@@ -190,7 +190,7 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
     private let queue: DispatchQueue
     private let emit: (IPCMessage) -> Void
     private let finished: () -> Void
-    private var exchanges: [UUID: NWConnection] = [:]
+    private var exchanges: [UUID: DNSUDPExchange] = [:]
     private var deadlines = DNSExchangeDeadlines<UUID>(capacity: 64)
     private var batch: [(Data, NWHostEndpoint)] = []
     private var index = 0
@@ -215,8 +215,7 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
             }
             let expired = self.deadlines.expire(at: now)
             for id in expired {
-                let connection = self.exchanges.removeValue(forKey: id)
-                connection?.stateUpdateHandler = nil; connection?.cancel()
+                self.exchanges[id]?.stop()
             }
             if !expired.isEmpty { self.pump() }
         }
@@ -230,7 +229,7 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
     private func close(_ error: Error?) {
         guard !cancelled else { return }
         cancelled = true
-        for connection in exchanges.values { connection.stateUpdateHandler = nil; connection.cancel() }
+        for exchange in Array(exchanges.values) { exchange.stop() }
         exchanges.removeAll(); batch.removeAll()
         deadlines = DNSExchangeDeadlines(capacity: 64)
         timer?.cancel(); timer = nil
@@ -267,40 +266,50 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
     }
     private func exchange(_ data: Data, endpoint: NWHostEndpoint, original: Network.NWEndpoint) {
         let id = UUID()
-        let connection = NWConnection(to: original, using: .udp)
         guard deadlines.insert(id, deadline: DispatchTime.now().uptimeNanoseconds + 15_000_000_000) else {
             close(DNSUpstreamEndpoint.invalid)
             return
         }
-        exchanges[id] = connection
-        var observer = DNSFlowObserver(maximumPending: 1)
-        if let query = observer.query(data, timestampNanos: Int64(Date().timeIntervalSince1970 * 1_000_000_000)) { emit(.dnsQueried(query)) }
-        connection.stateUpdateHandler = { [weak self] state in
-            if case .failed(let error) = state { self?.close(error) }
-        }
-        connection.start(queue: queue)
-        connection.send(content: data, completion: .contentProcessed { [weak self] error in
-            guard let self, !self.cancelled else { return }
-            if let error { self.close(error); return }
-            connection.receiveMessage { [weak self] response, _, _, error in
-                guard let self, !self.cancelled, self.exchanges[id] != nil else { return }
-                if let error { self.close(error); return }
-                guard let response else { self.close(DNSUpstreamEndpoint.invalid); return }
-                self.lastActivity = .now()
-                if let result = observer.response(response) { self.emit(.dnsResolved(result)) }
-                self.flow.writeDatagrams([response], sentBy: [endpoint]) { [weak self] error in
-                    guard let self else { return }
-                    self.queue.async {
-                        guard !self.cancelled else { return }
-                        if let error { self.close(error); return }
-                        connection.stateUpdateHandler = nil; connection.cancel()
-                        self.exchanges.removeValue(forKey: id)
-                        self.deadlines.remove(id)
-                        self.pump()
-                    }
-                }
-            }
-        })
+        let transport = DNSNetworkUDPTransport(flow: flow, endpoint: endpoint, original: original, queue: queue)
+        let exchange = DNSUDPExchange(transport: transport, data: data, emit: emit, failed: { [weak self] error in
+            self?.close(error)
+        }, finished: { [weak self] in
+            guard let self else { return }
+            self.exchanges.removeValue(forKey: id)
+            self.deadlines.remove(id)
+            self.pump()
+        }, activity: { [weak self] in self?.lastActivity = .now() })
+        exchanges[id] = exchange
+        exchange.start()
+    }
+}
 
+/// No lifecycle decisions here: every completion goes through DNSUDPExchange's
+/// active-state guard, including callbacks already queued at cancellation time.
+private final class DNSNetworkUDPTransport: DNSUDPTransport {
+    private let connection: NWConnection
+    private let flow: NEAppProxyUDPFlow
+    private let endpoint: NWHostEndpoint
+    private let queue: DispatchQueue
+    init(flow: NEAppProxyUDPFlow, endpoint: NWHostEndpoint, original: Network.NWEndpoint, queue: DispatchQueue) {
+        self.flow = flow; self.endpoint = endpoint; self.queue = queue
+        connection = NWConnection(to: original, using: .udp)
+    }
+    func start(_ failed: @escaping (Error) -> Void) {
+        connection.stateUpdateHandler = { state in if case .failed(let error) = state { failed(error) } }
+        connection.start(queue: queue)
+    }
+    func send(_ data: Data, completion: @escaping (Error?) -> Void) {
+        connection.send(content: data, completion: .contentProcessed { completion($0) })
+    }
+    func receive(_ completion: @escaping (Data?, Error?) -> Void) {
+        connection.receiveMessage { data, _, _, error in completion(data, error) }
+    }
+    func writeResponse(_ data: Data, completion: @escaping (Error?) -> Void) {
+        flow.writeDatagrams([data], sentBy: [endpoint]) { [weak self] error in self?.queue.async { completion(error) } }
+    }
+    func cancel() {
+        connection.stateUpdateHandler = nil
+        connection.cancel()
     }
 }

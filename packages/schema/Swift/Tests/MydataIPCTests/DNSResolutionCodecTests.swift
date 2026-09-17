@@ -52,4 +52,23 @@ final class DNSResolutionCodecTests: XCTestCase {
         XCTAssertEqual(try IPCCodec.decode(Data(stream.dropFirst(consumed))).0, .dnsQueried(query))
     }
 
+    func testDecoderRejectsInvalidCountFamilyAndResponseCode() throws {
+        let query = DNSQueryPayload(timestampNanos: 1, qtype: 1, qname: "a")!
+        let result = DNSResolutionPayload(query: query, rcode: 0, resolvedIPs: ["192.0.2.8"])!
+        let frame = IPCCodec.encode(.dnsResolved(result))
+        var count = frame; count[22] = 65
+        XCTAssertThrowsError(try IPCCodec.decode(count))
+        var family = frame; family[23] = 5
+        XCTAssertThrowsError(try IPCCodec.decode(family))
+        var code = frame; code[20] = 0x10
+        XCTAssertThrowsError(try IPCCodec.decode(code))
+    }
+
+    func testCanonicalAddressRoundTrip() throws {
+        let query = DNSQueryPayload(timestampNanos: 1, qtype: 28, qname: "a")!
+        let result = DNSResolutionPayload(query: query, rcode: 0, resolvedIPs: ["2001:DB8:0:0:0:0:0:1"])!
+        XCTAssertEqual(result.resolvedIPs, ["2001:db8::1"])
+        XCTAssertEqual(try IPCCodec.decode(IPCCodec.encode(.dnsResolved(result))).0, .dnsResolved(result))
+    }
+
 }
