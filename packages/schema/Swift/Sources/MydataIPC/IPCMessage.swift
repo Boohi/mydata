@@ -102,15 +102,20 @@ public struct DNSResolutionPayload: Sendable, Equatable {
 
     public init?(query: DNSQueryPayload, rcode: UInt16, resolvedIPs: [String]) {
         guard rcode <= 4095, resolvedIPs.count <= 64 else { return nil }
+        var canonical: [String] = []
         for ip in resolvedIPs {
             var bytes = [UInt8](repeating: 0, count: 16)
             let family = ip.contains(":") ? AF_INET6 : AF_INET
             guard ip.utf8.count <= 45,
+                  ip.utf8.allSatisfy({ (48...57).contains($0) || (65...70).contains($0) || (97...102).contains($0) || $0 == 46 || $0 == 58 }),
                   ip.withCString({ inet_pton(family, $0, &bytes) }) == 1 else { return nil }
+            var text = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
+            guard inet_ntop(family, &bytes, &text, socklen_t(INET6_ADDRSTRLEN)) != nil else { return nil }
+            canonical.append(String(cString: text))
         }
         self.query = query
         self.rcode = rcode
-        self.resolvedIPs = resolvedIPs
+        self.resolvedIPs = canonical
     }
 }
 

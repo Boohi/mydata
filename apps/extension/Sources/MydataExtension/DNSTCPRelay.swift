@@ -25,6 +25,7 @@ public final class DNSTCPRelay {
     private var started = false
     private var finished = false
     private var clientEOF = false
+    private var clientFinishSent = false
     private var upstreamEOF = false
 
     public init(transport: DNSTCPTransport, emit: @escaping (IPCMessage) -> Void = { _ in }, activity: @escaping () -> Void = {}, stopped: @escaping () -> Void = {}) {
@@ -60,7 +61,7 @@ public final class DNSTCPRelay {
                 self.transport.closeClientRead(nil)
                 self.transport.writeUpstream(nil, isComplete: true) { [weak self] error in
                     guard let self else { return }
-                    if let error { self.stop(error) } else { self.finishIfClosed() }
+                    if let error { self.stop(error) } else { self.clientFinishSent = true; self.finishIfClosed() }
                 }
                 return
             }
@@ -101,6 +102,6 @@ public final class DNSTCPRelay {
     }
 
     private func finishIfClosed() {
-        if clientEOF && upstreamEOF { stop() }
+        if clientEOF && clientFinishSent && upstreamEOF { stop() }
     }
 }

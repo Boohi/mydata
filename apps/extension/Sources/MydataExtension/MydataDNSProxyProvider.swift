@@ -191,6 +191,7 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
     private let emit: (IPCMessage) -> Void
     private let finished: () -> Void
     private var exchanges: [UUID: NWConnection] = [:]
+    private var deadlines = DNSExchangeDeadlines<UUID>(capacity: 64)
     private var batch: [(Data, NWHostEndpoint)] = []
     private var index = 0
     private var reading = false
@@ -204,10 +205,20 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
     func start() {
         let timer = DispatchSource.makeTimerSource(queue: queue)
         self.timer = timer
-        timer.schedule(deadline: .now() + 30, repeating: 5)
+        timer.schedule(deadline: .now() + 1, repeating: 1)
         timer.setEventHandler { [weak self] in
             guard let self else { return }
-            if DispatchTime.now().uptimeNanoseconds - self.lastActivity.uptimeNanoseconds >= 30_000_000_000 { self.close(DNSUpstreamEndpoint.timedOut) }
+            let now = DispatchTime.now().uptimeNanoseconds
+            if now - self.lastActivity.uptimeNanoseconds >= 30_000_000_000 {
+                self.close(DNSUpstreamEndpoint.timedOut)
+                return
+            }
+            let expired = self.deadlines.expire(at: now)
+            for id in expired {
+                let connection = self.exchanges.removeValue(forKey: id)
+                connection?.stateUpdateHandler = nil; connection?.cancel()
+            }
+            if !expired.isEmpty { self.pump() }
         }
         timer.resume()
         flow.open(withLocalEndpoint: nil) { [weak self] error in
@@ -221,6 +232,7 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
         cancelled = true
         for connection in exchanges.values { connection.stateUpdateHandler = nil; connection.cancel() }
         exchanges.removeAll(); batch.removeAll()
+        deadlines = DNSExchangeDeadlines(capacity: 64)
         timer?.cancel(); timer = nil
         flow.closeReadWithError(error); flow.closeWriteWithError(error)
         finished()
@@ -256,6 +268,10 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
     private func exchange(_ data: Data, endpoint: NWHostEndpoint, original: Network.NWEndpoint) {
         let id = UUID()
         let connection = NWConnection(to: original, using: .udp)
+        guard deadlines.insert(id, deadline: DispatchTime.now().uptimeNanoseconds + 15_000_000_000) else {
+            close(DNSUpstreamEndpoint.invalid)
+            return
+        }
         exchanges[id] = connection
         var observer = DNSFlowObserver(maximumPending: 1)
         if let query = observer.query(data, timestampNanos: Int64(Date().timeIntervalSince1970 * 1_000_000_000)) { emit(.dnsQueried(query)) }
@@ -279,16 +295,12 @@ private final class DNSNetworkUDPSession: DNSNetworkSession {
                         if let error { self.close(error); return }
                         connection.stateUpdateHandler = nil; connection.cancel()
                         self.exchanges.removeValue(forKey: id)
+                        self.deadlines.remove(id)
                         self.pump()
                     }
                 }
             }
         })
-        queue.asyncAfter(deadline: .now() + 15) { [weak self, weak connection] in
-            guard let self, !self.cancelled, self.exchanges[id] != nil else { return }
-            connection?.stateUpdateHandler = nil; connection?.cancel()
-            self.exchanges.removeValue(forKey: id)
-            self.pump()
-        }
+
     }
 }

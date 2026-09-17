@@ -30,7 +30,7 @@ public enum DNSPacket {
 
     public static func parseQuestion(_ data: Data) throws -> Question {
         let reader = Reader(data)
-        guard data.count >= 12 else { throw DNSParseError.truncated }
+        guard data.count >= 12, data.count <= 65535 else { throw DNSParseError.truncated }
         let flags = try reader.word(2)
         guard flags & 0xf800 == 0 else { throw DNSParseError.invalidMessage }
         return try reader.question().0
@@ -142,7 +142,7 @@ public enum DNSPacket {
                 if size == 0 { return (labels.joined(separator: "."), consumed ?? cursor + 1) }
                 if size & 0xc0 == 0xc0 {
                     let pointer = Int(try word(cursor) & 0x3fff)
-                    guard pointer < cursor else { throw DNSParseError.invalidLabel }
+                    guard pointer >= 12, pointer < cursor else { throw DNSParseError.invalidLabel }
                     if consumed == nil { consumed = cursor + 2 }
                     cursor = pointer
                     continue
