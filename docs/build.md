@@ -28,6 +28,19 @@
    The file is gitignored. The Team ID is the 10-character string under your name
    at https://developer.apple.com/account → Membership.
 
+### Entitlements
+
+The extension uses two NetworkExtension capabilities:
+
+- `content-filter-provider` — for `NEFilterDataProvider` (flow capture).
+- `dns-proxy` — for `NEDNSProxyProvider` (DNS query capture).
+
+Both live in `apps/extension/Bundle/MydataExtension.entitlements`. Apple
+requires your provisioning profile to authorise both entitlements before
+the system extension will load. If you see "missing entitlement" in
+`log stream --predicate 'subsystem == "com.apple.networkextension"'`,
+re-generate your provisioning profile with both capabilities enabled.
+
 ## Build
 
 ### Network extension (`apps/extension`)

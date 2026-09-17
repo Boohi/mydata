@@ -15,7 +15,9 @@ schema. Migrations are:
   `meta.schema_version` as part of its statements.
 
 The current baseline is `0001_initial.sql` (tables: `apps`, `flows`,
-`dns_queries`, `exclusions`, `meta`).
+`dns_queries`, `exclusions`, `meta`). Migration `0002_dns_resolutions.sql` adds
+typed DNS query/response events and JSON resolved-address lists without changing
+existing rows.
 
 ## Swift bindings
 

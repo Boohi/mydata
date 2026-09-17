@@ -62,6 +62,8 @@ public struct DNSQueryRow: Sendable, Equatable {
     public var qtype: Int
     public var rcode: Int?
     public var bundleId: String?
+    public var eventKind: String
+    public var resolvedIPs: [String]
 
     public init(
         id: Int64? = nil,
@@ -69,7 +71,9 @@ public struct DNSQueryRow: Sendable, Equatable {
         queryName: String,
         qtype: Int,
         rcode: Int? = nil,
-        bundleId: String? = nil
+        bundleId: String? = nil,
+        eventKind: String = "query",
+        resolvedIPs: [String] = []
     ) {
         self.id = id
         self.tsNs = tsNs
@@ -77,5 +81,7 @@ public struct DNSQueryRow: Sendable, Equatable {
         self.qtype = qtype
         self.rcode = rcode
         self.bundleId = bundleId
+        self.eventKind = eventKind
+        self.resolvedIPs = resolvedIPs
     }
 }

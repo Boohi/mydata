@@ -8,10 +8,16 @@ public enum MessagePrinter {
         switch message {
         case .flowStarted(let p): return "flow-start " + flow(p)
         case .flowEnded(let p):   return "flow-end   " + flow(p)
+        case .dnsQueried(let p):  return "dns        " + dns(p)
+        case .dnsResolved(let p): return "dns-result " + dns(p.query) + " rcode=\(p.rcode) resolved_ips=" + p.resolvedIPs.joined(separator: ",")
         case .ping:               return "ping"
         case .pong:               return "pong"
         case .unknown(let t):     return String(format: "unknown type=0x%02x", t)
         }
+    }
+
+    private static func dns(_ p: DNSQueryPayload) -> String {
+        return "ts=\(p.timestampNanos) qtype=\(p.qtype) qname=\(p.qname)"
     }
 
     private static func flow(_ p: FlowEventPayload) -> String {

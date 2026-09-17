@@ -80,9 +80,50 @@ public struct FlowEventPayload: Sendable, Equatable {
     }
 }
 
+public struct DNSQueryPayload: Sendable, Equatable {
+    public let timestampNanos: Int64
+    public let qtype: UInt16
+    public let qname: String  // ASCII/IDN-A presentation, max 253 bytes
+
+    public init?(timestampNanos: Int64, qtype: UInt16, qname: String) {
+        guard qname.utf8.count <= 253,
+              qname.utf8.allSatisfy({ $0 >= 33 && $0 <= 126 && $0 != 92 && $0 != 34 }) else { return nil }
+        self.timestampNanos = timestampNanos
+        self.qtype = qtype
+        self.qname = qname
+    }
+}
+
+/// Additive response event. The original query wire payload is unchanged.
+public struct DNSResolutionPayload: Sendable, Equatable {
+    public let query: DNSQueryPayload
+    public let rcode: UInt16
+    public let resolvedIPs: [String]
+
+    public init?(query: DNSQueryPayload, rcode: UInt16, resolvedIPs: [String]) {
+        guard rcode <= 4095, resolvedIPs.count <= 64 else { return nil }
+        var canonical: [String] = []
+        for ip in resolvedIPs {
+            var bytes = [UInt8](repeating: 0, count: 16)
+            let family = ip.contains(":") ? AF_INET6 : AF_INET
+            guard ip.utf8.count <= 45,
+                  ip.utf8.allSatisfy({ (48...57).contains($0) || (65...70).contains($0) || (97...102).contains($0) || $0 == 46 || $0 == 58 }),
+                  ip.withCString({ inet_pton(family, $0, &bytes) }) == 1 else { return nil }
+            var text = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
+            guard inet_ntop(family, &bytes, &text, socklen_t(INET6_ADDRSTRLEN)) != nil else { return nil }
+            canonical.append(String(cString: text))
+        }
+        self.query = query
+        self.rcode = rcode
+        self.resolvedIPs = canonical
+    }
+}
+
 public enum IPCMessage: Sendable, Equatable {
     case flowStarted(FlowEventPayload)
     case flowEnded(FlowEventPayload)
+    case dnsQueried(DNSQueryPayload)
+    case dnsResolved(DNSResolutionPayload)
     case ping
     case pong
     /// Surfaced when the codec encounters an unknown type code so the receiver
